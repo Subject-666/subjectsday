@@ -1,23 +1,16 @@
-let store = global.store || {};
-global.store = store;
+import store from "./store.js";
 
-export async function handler(event) {
-  const data = JSON.parse(event.body);
+export async function handler(e){
+  const d = JSON.parse(e.body);
+  if(d.password !== "Subject_666") return {statusCode:401, body:"no"};
 
-  if (data.password !== "Subject_666") {
-    return { statusCode: 401, body: "Unauthorized" };
-  }
-
-  store[data.keyword] = {
-    keyword: data.keyword,
-    image: data.image,
-    audio: data.audio,
-    expected: data.expected.toLowerCase(),
-    success: 0
+  store[d.keyword] = {
+    keyword:d.keyword,
+    image:d.image,
+    audio:d.audio,
+    expected:d.expected.toLowerCase(),
+    success:0
   };
 
-  return {
-    statusCode: 200,
-    body: JSON.stringify({ ok: true })
-  };
+  return {statusCode:200, body:"ok"};
 }
