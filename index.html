@@ -1,150 +1,253 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
 <meta charset="UTF-8">
 <title>Speaking Feelings</title>
 
 <style>
+:root{
+  --bg1:#05060a;
+  --bg2:#0b1020;
+  --accent:#8b9cff;
+  --accent2:#9cffd9;
+}
+
 *{
   box-sizing:border-box;
-  font-family: "Segoe UI", system-ui, sans-serif;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
 }
 
 body{
   margin:0;
-  height:100vh;
-  background: radial-gradient(circle at top, #1a1a1a, #0b0b0b);
-  color:white;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  min-height:100vh;
+  background:
+    radial-gradient(circle at top, #0e1530, transparent 60%),
+    linear-gradient(180deg, var(--bg2), var(--bg1));
+  color:#fff;
   overflow:hidden;
 }
 
-/* Mouse glow */
-.glow{
+/* dotted background */
+body::before{
+  content:"";
   position:fixed;
-  width:300px;
-  height:300px;
-  background:radial-gradient(circle, rgba(255,255,255,0.12), transparent 70%);
+  inset:0;
+  background-image:radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size:24px 24px;
+  pointer-events:none;
+}
+
+/* mouse glow */
+#glow{
+  position:fixed;
+  width:520px;
+  height:520px;
+  background:
+    radial-gradient(circle,
+      rgba(255,255,255,0.18),
+      rgba(139,156,255,0.08),
+      transparent 65%);
   pointer-events:none;
   transform:translate(-50%,-50%);
   transition:0.05s;
 }
 
-/* Card */
-.card{
-  width:360px;
-  padding:35px;
-  border-radius:20px;
+/* layout */
+.container{
+  max-width:1200px;
+  margin:auto;
+  padding:80px 40px;
+  display:grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap:60px;
+  align-items:center;
+}
+
+/* left */
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 14px;
+  border-radius:999px;
   background:rgba(255,255,255,0.08);
-  backdrop-filter: blur(20px);
-  box-shadow:0 0 40px rgba(255,255,255,0.05);
-  text-align:center;
-}
-
-/* Title */
-h1{
-  font-weight:500;
+  font-size:14px;
   margin-bottom:25px;
-  letter-spacing:1px;
 }
 
-/* Input */
+h1{
+  font-size:64px;
+  line-height:1.05;
+  margin:0 0 20px;
+  letter-spacing:-1px;
+}
+
+h1 span{
+  background:linear-gradient(90deg, var(--accent), #c7d2ff);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+p{
+  font-size:18px;
+  color:rgba(255,255,255,0.75);
+  max-width:520px;
+}
+
+/* input */
+.input-box{
+  margin-top:35px;
+  display:flex;
+  gap:14px;
+}
+
 input{
-  width:100%;
-  padding:14px;
-  border-radius:12px;
+  flex:1;
+  padding:16px 18px;
+  border-radius:14px;
   border:none;
   outline:none;
-  background:rgba(255,255,255,0.12);
-  color:white;
   font-size:16px;
-  text-align:center;
+  background:rgba(255,255,255,0.1);
+  color:white;
 }
 
-input::placeholder{
-  color:rgba(255,255,255,0.5);
-}
-
-/* Button */
 button{
-  margin-top:20px;
-  width:100%;
-  padding:14px;
+  padding:16px 26px;
+  border-radius:14px;
   border:none;
-  border-radius:12px;
-  background:white;
-  color:black;
-  font-size:15px;
   cursor:pointer;
-  transition:0.3s;
+  font-size:15px;
+  background:linear-gradient(90deg, var(--accent), var(--accent2));
+  color:#000;
+  font-weight:500;
 }
 
-button:hover{
-  background:#eaeaea;
+/* right mock card */
+.preview{
+  background:rgba(255,255,255,0.06);
+  border-radius:22px;
+  padding:20px;
+  backdrop-filter: blur(18px);
+  box-shadow:0 40px 120px rgba(0,0,0,0.6);
 }
 
-/* Admin Panel */
+.chat{
+  background:rgba(0,0,0,0.35);
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:10px;
+}
+
+.msg{
+  display:flex;
+  gap:10px;
+  margin-bottom:10px;
+  align-items:flex-start;
+}
+
+.avatar{
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  background:linear-gradient(135deg, var(--accent), var(--accent2));
+}
+
+.bubble{
+  background:rgba(255,255,255,0.1);
+  padding:10px 14px;
+  border-radius:14px;
+  font-size:14px;
+}
+
+/* admin panel */
 #admin{
   display:none;
-  margin-top:25px;
-  text-align:left;
+  margin-top:40px;
 }
 
 .admin-card{
-  background:rgba(0,0,0,0.35);
-  padding:15px;
-  border-radius:15px;
-  margin-top:10px;
+  background:rgba(0,0,0,0.45);
+  padding:18px;
+  border-radius:16px;
+  margin-bottom:10px;
 }
 
 .admin-card input{
+  width:100%;
   margin-bottom:8px;
-  text-align:left;
-}
-
-small{
-  opacity:0.6;
 }
 </style>
 </head>
 
 <body>
 
-<div class="glow" id="glow"></div>
+<div id="glow"></div>
 
-<div class="card">
-  <h1>Speaking Feelings</h1>
+<div class="container">
 
-  <input id="main" placeholder="Enter">
-  <button onclick="go()">Continue</button>
+  <!-- LEFT -->
+  <div>
+    <div class="badge">✨ Gerçek telaffuz deneyimi</div>
 
-  <div id="admin">
-    <small>Developer Panel</small>
+    <h1>
+      Gerçek sohbet,<br>
+      <span>seninle başlar</span>
+    </h1>
 
-    <div class="admin-card">
-      <input id="k" placeholder="Keyword">
-      <input id="exp" placeholder="Expected pronunciation">
-      <input type="file" id="img">
-      <input type="file" id="aud">
-      <button onclick="add()">Add</button>
+    <p>
+      Kelimeleri gör, dinle ve doğru şekilde söyle.
+      Konuşarak öğrenmenin en doğal yolu.
+    </p>
+
+    <div class="input-box">
+      <input id="main" placeholder="Başla">
+      <button onclick="go()">Devam</button>
     </div>
 
-    <div id="list"></div>
+    <!-- ADMIN -->
+    <div id="admin">
+      <div class="admin-card">
+        <input id="k" placeholder="Keyword">
+        <input id="exp" placeholder="Expected pronunciation">
+        <input type="file" id="img">
+        <input type="file" id="aud">
+        <button onclick="add()">Add</button>
+      </div>
+      <div id="list"></div>
+    </div>
   </div>
+
+  <!-- RIGHT -->
+  <div class="preview">
+    <div class="chat">
+      <div class="msg">
+        <div class="avatar"></div>
+        <div class="bubble">Telaffuz gerçekten çok net 🔊</div>
+      </div>
+      <div class="msg">
+        <div class="avatar"></div>
+        <div class="bubble">Bu yöntem öğrenmeyi kolaylaştırıyor</div>
+      </div>
+      <div class="msg">
+        <div class="avatar"></div>
+        <div class="bubble">Arayüz premium hissettiriyor ✨</div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
-/* Mouse glow */
+/* mouse glow */
 document.addEventListener("mousemove",e=>{
   glow.style.left=e.clientX+"px";
   glow.style.top=e.clientY+"px";
 });
 
-/* Navigation */
+/* navigation */
 function go(){
-  if(main.value === "Subject_666"){
+  if(main.value==="Subject_666"){
     admin.style.display="block";
     load();
   } else {
@@ -152,14 +255,14 @@ function go(){
   }
 }
 
-/* Utils */
-const to64 = f => new Promise(r=>{
+/* utils */
+const to64=f=>new Promise(r=>{
   const fr=new FileReader();
   fr.onload=()=>r(fr.result);
   fr.readAsDataURL(f);
 });
 
-/* Add word */
+/* add */
 async function add(){
   await fetch("/.netlify/functions/addWord",{
     method:"POST",
@@ -174,7 +277,7 @@ async function add(){
   load();
 }
 
-/* Load list */
+/* list */
 function load(){
   fetch("/.netlify/functions/listWords")
   .then(r=>r.json())
@@ -182,16 +285,16 @@ function load(){
     list.innerHTML="";
     d.forEach(w=>{
       list.innerHTML+=`
-      <div class="admin-card">
-        <b>${w.keyword}</b> — success: ${w.success}<br>
-        <button onclick="del('${w.keyword}')">Delete</button>
-        <button onclick="edit('${w.keyword}')">Edit</button>
-      </div>`;
+        <div class="admin-card">
+          <b>${w.keyword}</b> — success: ${w.success}
+          <br>
+          <button onclick="del('${w.keyword}')">Delete</button>
+          <button onclick="edit('${w.keyword}')">Edit</button>
+        </div>`;
     });
   });
 }
 
-/* Delete */
 function del(k){
   fetch("/.netlify/functions/deleteWord",{
     method:"POST",
@@ -199,7 +302,6 @@ function del(k){
   }).then(load);
 }
 
-/* Edit */
 function edit(k){
   const n=prompt("New pronunciation:");
   if(!n) return;
@@ -216,4 +318,5 @@ function edit(k){
 
 </body>
 </html>
+
 
