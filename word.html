@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1 id="title"></h1>
+<img id="img" width="200"><br>
+<audio id="aud" controls></audio><br>
+<button onclick="speak()">🎤 Konuş</button>
+<p id="res"></p>
+
+<script>
+let expected="";
+const key=new URLSearchParams(location.search).get("key");
+
+fetch("/.netlify/functions/getWord?key="+key)
+.then(r=>r.json())
+.then(d=>{
+  title.innerText=d.keyword;
+  img.src=d.image;
+  aud.src=d.audio;
+  expected=d.expected;
+});
+
+function speak(){
+  const r=new webkitSpeechRecognition();
+  r.lang="en-US";
+  r.onresult=e=>{
+    const s=e.results[0][0].transcript.toLowerCase();
+    if(s.includes(expected)){
+      res.innerText="🎉 BAŞARILI";
+      fetch("/.netlify/functions/success",{
+        method:"POST",
+        body:JSON.stringify({key})
+      });
+    } else {
+      res.innerText="❌ YANLIŞ";
+    }
+  };
+  r.start();
+}
+</script>
+
+</body>
+</html>

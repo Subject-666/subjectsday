@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<input id="input" placeholder="kelime veya Subject_666">
+<button onclick="go()">Devam</button>
+
+<div id="admin" style="display:none">
+  <h3>Geliştirici Paneli</h3>
+  <input id="key" placeholder="keyword"><br>
+  <input type="file" id="img"><br>
+  <input type="file" id="aud"><br>
+  <input id="exp" placeholder="telaffuz"><br>
+  <button onclick="add()">Ekle</button>
+</div>
+
+<script>
+function go(){
+  if(input.value==="Subject_666"){
+    admin.style.display="block";
+  } else {
+    location.href="word.html?key="+input.value;
+  }
+}
+
+function to64(f){
+  return new Promise(r=>{
+    const fr=new FileReader();
+    fr.onload=()=>r(fr.result);
+    fr.readAsDataURL(f);
+  });
+}
+
+async function add(){
+  const image = await to64(img.files[0]);
+  const audio = await to64(aud.files[0]);
+
+  await fetch("/.netlify/functions/addWord",{
+    method:"POST",
+    body:JSON.stringify({
+      password:"Subject_666",
+      keyword:key.value,
+      image,
+      audio,
+      expected:exp.value
+    })
+  });
+
+  alert("Eklendi");
+}
+</script>
+
+</body>
+</html>
