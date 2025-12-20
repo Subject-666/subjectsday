@@ -1,44 +1,150 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Speaking Feelings</title>
+
+<style>
+*{box-sizing:border-box;font-family:system-ui}
+body{
+  margin:0;height:100vh;
+  background:#05070c;
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+.glow{
+  position:fixed;
+  width:1000px;height:1000px;
+  background:radial-gradient(circle,rgba(120,255,200,.12),transparent 65%);
+  pointer-events:none;
+  transform:translate(-50%,-50%);
+}
+
+.card{
+  width:800px;
+  background:rgba(255,255,255,.06);
+  backdrop-filter:blur(25px);
+  border-radius:26px;
+  padding:40px;
+  text-align:center;
+}
+
+img{
+  width:200px;
+  border-radius:18px;
+  margin-bottom:20px;
+}
+
+button{
+  padding:16px 26px;
+  border:none;
+  border-radius:999px;
+  background:#9dff00;
+  color:black;
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+#result{
+  margin-top:20px;
+  font-size:18px;
+}
+
+.success{
+  color:#9dff00;
+  animation:pulse 1s infinite;
+}
+.fail{
+  color:#ff5c5c;
+}
+
+@keyframes pulse{
+  0%{opacity:.6}
+  50%{opacity:1}
+  100%{opacity:.6}
+}
+
+@media(max-width:700px){
+  .card{width:95%}
+  img{width:150px}
+}
+</style>
+</head>
+
 <body>
 
-<h1 id="title"></h1>
-<img id="img" width="200"><br>
-<audio id="aud" controls></audio><br>
-<button onclick="speak()">🎤 Konuş</button>
-<p id="res"></p>
+<div class="glow" id="glow"></div>
+
+<div class="card">
+  <h1 id="title"></h1>
+  <img id="img">
+  <audio id="audio"></audio>
+  <br><br>
+  <button onclick="start()">Speak</button>
+  <div id="result"></div>
+</div>
 
 <script>
-let expected="";
-const key=new URLSearchParams(location.search).get("key");
+const api="/.netlify/functions";
+const glow=document.getElementById("glow");
+document.onmousemove=e=>{
+  glow.style.left=e.clientX+"px";
+  glow.style.top=e.clientY+"px";
+};
 
-fetch("/.netlify/functions/getWord?key="+key)
+const params=new URLSearchParams(location.search);
+const key=params.get("key");
+
+const title=document.getElementById("title");
+const img=document.getElementById("img");
+const audio=document.getElementById("audio");
+const result=document.getElementById("result");
+
+let expected="";
+
+fetch(api+"/getWord?key="+key)
 .then(r=>r.json())
 .then(d=>{
-  title.innerText=d.keyword;
+  title.textContent=d.keyword;
   img.src=d.image;
-  aud.src=d.audio;
-  expected=d.expected;
+  audio.src=d.audio;
+  expected=d.expected.toLowerCase();
+  audio.play();
 });
 
-function speak(){
-  const r=new webkitSpeechRecognition();
-  r.lang="en-US";
-  r.onresult=e=>{
-    const s=e.results[0][0].transcript.toLowerCase();
-    if(s.includes(expected)){
-      res.innerText="🎉 BAŞARILI";
-      fetch("/.netlify/functions/success",{
-        method:"POST",
-        body:JSON.stringify({key})
-      });
-    } else {
-      res.innerText="❌ YANLIŞ";
-    }
-  };
-  r.start();
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+
+const rec=new SpeechRecognition();
+rec.lang="en-US";
+rec.interimResults=false;
+
+function start(){
+  result.textContent="Listening...";
+  rec.start();
 }
+
+rec.onresult=e=>{
+  const said=e.results[0][0].transcript.toLowerCase();
+  if(said.includes(expected)){
+    result.innerHTML="✔ Success";
+    result.className="success";
+    fetch(api+"/success",{
+      method:"POST",
+      body:JSON.stringify({key})
+    });
+  }else{
+    result.innerHTML="✖ Try again";
+    result.className="fail";
+  }
+};
 </script>
 
 </body>
 </html>
+
