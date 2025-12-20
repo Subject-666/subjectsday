@@ -1,54 +1,98 @@
 <!DOCTYPE html>
 <html>
+<head>
+<style>
+body{font-family:sans-serif;background:#111;color:#fff;text-align:center}
+.card{background:#222;padding:15px;margin:10px;border-radius:10px}
+button{padding:8px;margin:5px}
+input{padding:8px;margin:5px}
+</style>
+</head>
 <body>
 
-<input id="input" placeholder="kelime veya Subject_666">
+<h1>Speaking Feelings</h1>
+
+<input id="main" placeholder="kelime / Subject_666">
 <button onclick="go()">Devam</button>
 
 <div id="admin" style="display:none">
-  <h3>Geliştirici Paneli</h3>
-  <input id="key" placeholder="keyword"><br>
-  <input type="file" id="img"><br>
-  <input type="file" id="aud"><br>
-  <input id="exp" placeholder="telaffuz"><br>
-  <button onclick="add()">Ekle</button>
+
+<h2>Admin Panel</h2>
+
+<div class="card">
+<input id="k" placeholder="keyword">
+<input id="exp" placeholder="telaffuz">
+<input type="file" id="img">
+<input type="file" id="aud">
+<button onclick="add()">➕ Ekle</button>
+</div>
+
+<h3>Eklenenler</h3>
+<div id="list"></div>
+
 </div>
 
 <script>
 function go(){
-  if(input.value==="Subject_666"){
+  if(main.value==="Subject_666"){
     admin.style.display="block";
-  } else {
-    location.href="word.html?key="+input.value;
-  }
+    load();
+  } else location.href="word.html?key="+main.value;
 }
 
-function to64(f){
-  return new Promise(r=>{
-    const fr=new FileReader();
-    fr.onload=()=>r(fr.result);
-    fr.readAsDataURL(f);
-  });
-}
+const to64=f=>new Promise(r=>{
+  const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(f)
+});
 
 async function add(){
-  const image = await to64(img.files[0]);
-  const audio = await to64(aud.files[0]);
-
-  await fetch("/.netlify/functions/addWord",{
+  fetch("/.netlify/functions/addWord",{
     method:"POST",
     body:JSON.stringify({
       password:"Subject_666",
-      keyword:key.value,
-      image,
-      audio,
-      expected:exp.value
+      keyword:k.value,
+      expected:exp.value,
+      image:await to64(img.files[0]),
+      audio:await to64(aud.files[0])
     })
-  });
+  }).then(load);
+}
 
-  alert("Eklendi");
+function load(){
+  fetch("/.netlify/functions/listWords")
+  .then(r=>r.json())
+  .then(d=>{
+    list.innerHTML="";
+    d.forEach(w=>{
+      list.innerHTML+=`
+      <div class="card">
+      <b>${w.keyword}</b> | başarı: ${w.success}<br>
+      <button onclick="del('${w.keyword}')">🗑️ Sil</button>
+      <button onclick="upd('${w.keyword}')">✏️ Düzenle</button>
+      </div>`;
+    });
+  });
+}
+
+function del(k){
+  fetch("/.netlify/functions/deleteWord",{
+    method:"POST",
+    body:JSON.stringify({password:"Subject_666", keyword:k})
+  }).then(load);
+}
+
+function upd(k){
+  const n=prompt("Yeni telaffuz?");
+  fetch("/.netlify/functions/updateWord",{
+    method:"POST",
+    body:JSON.stringify({password:"Subject_666", keyword:k, expected:n})
+  }).then(load);
 }
 </script>
 
 </body>
 </html>
+
+
+</body>
+</html>
+
