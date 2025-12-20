@@ -1,51 +1,167 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
+<title>Speaking Feelings</title>
+
 <style>
-body{font-family:sans-serif;background:#111;color:#fff;text-align:center}
-.card{background:#222;padding:15px;margin:10px;border-radius:10px}
-button{padding:8px;margin:5px}
-input{padding:8px;margin:5px}
+*{
+  box-sizing:border-box;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+body{
+  margin:0;
+  height:100vh;
+  background: radial-gradient(circle at top, #1a1a1a, #0b0b0b);
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+/* Mouse glow */
+.glow{
+  position:fixed;
+  width:300px;
+  height:300px;
+  background:radial-gradient(circle, rgba(255,255,255,0.12), transparent 70%);
+  pointer-events:none;
+  transform:translate(-50%,-50%);
+  transition:0.05s;
+}
+
+/* Card */
+.card{
+  width:360px;
+  padding:35px;
+  border-radius:20px;
+  background:rgba(255,255,255,0.08);
+  backdrop-filter: blur(20px);
+  box-shadow:0 0 40px rgba(255,255,255,0.05);
+  text-align:center;
+}
+
+/* Title */
+h1{
+  font-weight:500;
+  margin-bottom:25px;
+  letter-spacing:1px;
+}
+
+/* Input */
+input{
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:none;
+  outline:none;
+  background:rgba(255,255,255,0.12);
+  color:white;
+  font-size:16px;
+  text-align:center;
+}
+
+input::placeholder{
+  color:rgba(255,255,255,0.5);
+}
+
+/* Button */
+button{
+  margin-top:20px;
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  background:white;
+  color:black;
+  font-size:15px;
+  cursor:pointer;
+  transition:0.3s;
+}
+
+button:hover{
+  background:#eaeaea;
+}
+
+/* Admin Panel */
+#admin{
+  display:none;
+  margin-top:25px;
+  text-align:left;
+}
+
+.admin-card{
+  background:rgba(0,0,0,0.35);
+  padding:15px;
+  border-radius:15px;
+  margin-top:10px;
+}
+
+.admin-card input{
+  margin-bottom:8px;
+  text-align:left;
+}
+
+small{
+  opacity:0.6;
+}
 </style>
 </head>
+
 <body>
 
-<h1>Speaking Feelings</h1>
-
-<input id="main" placeholder="kelime / Subject_666">
-<button onclick="go()">Devam</button>
-
-<div id="admin" style="display:none">
-
-<h2>Admin Panel</h2>
+<div class="glow" id="glow"></div>
 
 <div class="card">
-<input id="k" placeholder="keyword">
-<input id="exp" placeholder="telaffuz">
-<input type="file" id="img">
-<input type="file" id="aud">
-<button onclick="add()">➕ Ekle</button>
-</div>
+  <h1>Speaking Feelings</h1>
 
-<h3>Eklenenler</h3>
-<div id="list"></div>
+  <input id="main" placeholder="Enter">
+  <button onclick="go()">Continue</button>
 
+  <div id="admin">
+    <small>Developer Panel</small>
+
+    <div class="admin-card">
+      <input id="k" placeholder="Keyword">
+      <input id="exp" placeholder="Expected pronunciation">
+      <input type="file" id="img">
+      <input type="file" id="aud">
+      <button onclick="add()">Add</button>
+    </div>
+
+    <div id="list"></div>
+  </div>
 </div>
 
 <script>
-function go(){
-  if(main.value==="Subject_666"){
-    admin.style.display="block";
-    load();
-  } else location.href="word.html?key="+main.value;
-}
-
-const to64=f=>new Promise(r=>{
-  const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(f)
+/* Mouse glow */
+document.addEventListener("mousemove",e=>{
+  glow.style.left=e.clientX+"px";
+  glow.style.top=e.clientY+"px";
 });
 
+/* Navigation */
+function go(){
+  if(main.value === "Subject_666"){
+    admin.style.display="block";
+    load();
+  } else {
+    location.href="word.html?key="+main.value;
+  }
+}
+
+/* Utils */
+const to64 = f => new Promise(r=>{
+  const fr=new FileReader();
+  fr.onload=()=>r(fr.result);
+  fr.readAsDataURL(f);
+});
+
+/* Add word */
 async function add(){
-  fetch("/.netlify/functions/addWord",{
+  await fetch("/.netlify/functions/addWord",{
     method:"POST",
     body:JSON.stringify({
       password:"Subject_666",
@@ -54,9 +170,11 @@ async function add(){
       image:await to64(img.files[0]),
       audio:await to64(aud.files[0])
     })
-  }).then(load);
+  });
+  load();
 }
 
+/* Load list */
 function load(){
   fetch("/.netlify/functions/listWords")
   .then(r=>r.json())
@@ -64,15 +182,16 @@ function load(){
     list.innerHTML="";
     d.forEach(w=>{
       list.innerHTML+=`
-      <div class="card">
-      <b>${w.keyword}</b> | başarı: ${w.success}<br>
-      <button onclick="del('${w.keyword}')">🗑️ Sil</button>
-      <button onclick="upd('${w.keyword}')">✏️ Düzenle</button>
+      <div class="admin-card">
+        <b>${w.keyword}</b> — success: ${w.success}<br>
+        <button onclick="del('${w.keyword}')">Delete</button>
+        <button onclick="edit('${w.keyword}')">Edit</button>
       </div>`;
     });
   });
 }
 
+/* Delete */
 function del(k){
   fetch("/.netlify/functions/deleteWord",{
     method:"POST",
@@ -80,18 +199,20 @@ function del(k){
   }).then(load);
 }
 
-function upd(k){
-  const n=prompt("Yeni telaffuz?");
+/* Edit */
+function edit(k){
+  const n=prompt("New pronunciation:");
+  if(!n) return;
   fetch("/.netlify/functions/updateWord",{
     method:"POST",
-    body:JSON.stringify({password:"Subject_666", keyword:k, expected:n})
+    body:JSON.stringify({
+      password:"Subject_666",
+      keyword:k,
+      expected:n
+    })
   }).then(load);
 }
 </script>
-
-</body>
-</html>
-
 
 </body>
 </html>
