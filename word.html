@@ -6,72 +6,115 @@
 
 <style>
 *{box-sizing:border-box;font-family:system-ui}
+html,body{margin:0;height:100%}
+
 body{
-  margin:0;height:100vh;
-  background:#05070c;
-  color:white;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  background:#0b0e14;
+  color:#fff;
   overflow:hidden;
 }
 
+/* ===== GLOW ===== */
 .glow{
   position:fixed;
-  width:1000px;height:1000px;
-  background:radial-gradient(circle,rgba(120,255,200,.12),transparent 65%);
+  width:1000px;
+  height:1000px;
+  background:radial-gradient(circle,rgba(180,220,255,.18),transparent 65%);
   pointer-events:none;
   transform:translate(-50%,-50%);
+  transition:.12s ease-out;
 }
 
+/* ===== CENTER ===== */
+.center{
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* ===== CARD ===== */
 .card{
-  width:800px;
-  background:rgba(255,255,255,.06);
-  backdrop-filter:blur(25px);
+  width:420px;
+  padding:38px;
   border-radius:26px;
-  padding:40px;
-  text-align:center;
+  background:rgba(255,255,255,.08);
+  backdrop-filter:blur(24px);
+  box-shadow:0 40px 120px rgba(0,0,0,.6);
+  transition:.35s ease;
+  transform-style:preserve-3d;
 }
 
-img{
-  width:200px;
-  border-radius:18px;
-  margin-bottom:20px;
+/* ===== TEXT ===== */
+h1{
+  margin:0 0 26px;
+  font-weight:500;
+  letter-spacing:.6px;
 }
 
+/* ===== INPUT ===== */
+input{
+  width:100%;
+  padding:16px;
+  border-radius:16px;
+  border:none;
+  background:rgba(255,255,255,.14);
+  color:white;
+  font-size:16px;
+  outline:none;
+}
+
+/* ===== BUTTON ===== */
 button{
-  padding:16px 26px;
+  width:100%;
+  margin-top:22px;
+  padding:16px;
   border:none;
   border-radius:999px;
-  background:#9dff00;
-  color:black;
-  font-size:16px;
+  background:#ffffff;
+  color:#000;
   font-weight:600;
   cursor:pointer;
+  transition:.25s ease;
+  position:relative;
+  overflow:hidden;
 }
 
-#result{
-  margin-top:20px;
-  font-size:18px;
+/* ===== LOADING ===== */
+button.loading{
+  pointer-events:none;
+  background:#e5e5e5;
+}
+button.loading::after{
+  content:"";
+  position:absolute;
+  width:22px;
+  height:22px;
+  border:3px solid #000;
+  border-top-color:transparent;
+  border-radius:50%;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ===== PAGE MORPH ===== */
+.page-leave{
+  animation:leave .45s forwards;
+}
+@keyframes leave{
+  to{opacity:0;transform:scale(.96)}
 }
 
-.success{
-  color:#9dff00;
-  animation:pulse 1s infinite;
-}
-.fail{
-  color:#ff5c5c;
-}
-
-@keyframes pulse{
-  0%{opacity:.6}
-  50%{opacity:1}
-  100%{opacity:.6}
-}
-
-@media(max-width:700px){
-  .card{width:95%}
-  img{width:150px}
+/* ===== FOOTER ===== */
+footer{
+  position:fixed;
+  bottom:14px;
+  right:18px;
+  font-size:12px;
+  opacity:.25;
 }
 </style>
 </head>
@@ -80,71 +123,82 @@ button{
 
 <div class="glow" id="glow"></div>
 
-<div class="card">
-  <h1 id="title"></h1>
-  <img id="img">
-  <audio id="audio"></audio>
-  <br><br>
-  <button onclick="start()">Speak</button>
-  <div id="result"></div>
+<div class="center">
+  <div class="card" id="card">
+    <h1>Speaking Feelings</h1>
+    <input id="input" placeholder="Enter">
+    <button id="btn" onclick="go()">Continue</button>
+  </div>
 </div>
 
+<footer>by Subject_666</footer>
+
+<!-- hover sound -->
+<audio id="hoverSound" preload="auto">
+  <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=">
+</audio>
+
 <script>
-const api="/.netlify/functions";
 const glow=document.getElementById("glow");
-document.onmousemove=e=>{
+const card=document.getElementById("card");
+const btn=document.getElementById("btn");
+const hoverSound=document.getElementById("hoverSound");
+
+/* ===== MOUSE GLOW + CARD BEND ===== */
+document.addEventListener("mousemove",e=>{
   glow.style.left=e.clientX+"px";
   glow.style.top=e.clientY+"px";
-};
 
-const params=new URLSearchParams(location.search);
-const key=params.get("key");
+  const r=card.getBoundingClientRect();
+  const cx=r.left+r.width/2;
+  const cy=r.top+r.height/2;
 
-const title=document.getElementById("title");
-const img=document.getElementById("img");
-const audio=document.getElementById("audio");
-const result=document.getElementById("result");
+  const dx=(e.clientX-cx)/25;
+  const dy=(e.clientY-cy)/25;
 
-let expected="";
-
-fetch(api+"/getWord?key="+key)
-.then(r=>r.json())
-.then(d=>{
-  title.textContent=d.keyword;
-  img.src=d.image;
-  audio.src=d.audio;
-  expected=d.expected.toLowerCase();
-  audio.play();
+  card.style.transform=`rotateX(${-dy}deg) rotateY(${dx}deg)`;
 });
 
-const SpeechRecognition =
-  window.SpeechRecognition || window.webkitSpeechRecognition;
+/* ===== BUTTON INTERACTION ===== */
+btn.addEventListener("mouseenter",()=>{
+  hoverSound.currentTime=0;
+  hoverSound.play().catch(()=>{});
+  if(navigator.vibrate) navigator.vibrate(10);
+});
 
-const rec=new SpeechRecognition();
-rec.lang="en-US";
-rec.interimResults=false;
+btn.addEventListener("mousemove",e=>{
+  const r=btn.getBoundingClientRect();
+  const x=e.clientX-r.left-r.width/2;
+  const y=e.clientY-r.top-r.height/2;
+  btn.style.transform=`translate(${x/12}px,${y/12}px) scale(1.06)`;
+});
+btn.addEventListener("mouseleave",()=>{
+  btn.style.transform="scale(1)";
+});
 
-function start(){
-  result.textContent="Listening...";
-  rec.start();
+/* ===== PAGE MORPH ===== */
+function pageMorph(url){
+  document.body.classList.add("page-leave");
+  setTimeout(()=>location.href=url,420);
 }
 
-rec.onresult=e=>{
-  const said=e.results[0][0].transcript.toLowerCase();
-  if(said.includes(expected)){
-    result.innerHTML="✔ Success";
-    result.className="success";
-    fetch(api+"/success",{
-      method:"POST",
-      body:JSON.stringify({key})
-    });
-  }else{
-    result.innerHTML="✖ Try again";
-    result.className="fail";
-  }
-};
+/* ===== GO ===== */
+function go(){
+  const v=input.value.trim();
+  if(!v) return;
+
+  btn.classList.add("loading");
+  if(navigator.vibrate) navigator.vibrate([20,10,20]);
+
+  setTimeout(()=>{
+    if(v==="Subject_666"){
+      pageMorph("admin.html");
+    }else{
+      pageMorph("word.html?key="+encodeURIComponent(v));
+    }
+  },600);
+}
 </script>
 
 </body>
 </html>
-
