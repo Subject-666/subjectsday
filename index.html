@@ -1,191 +1,115 @@
 <!DOCTYPE html>
 <html lang="tr">
-<head>
-<meta charset="UTF-8">
-<title>Speaking Feelings</title>
+  <head>
+    <meta charset="UTF-8">
+    <title>Speaking Feelings</title>
+  <style>
+    html,body{
+        margin:0;
+        height:100%;
+        background:#0b0f1a;
+        font-family:system-ui;
+        overflow:hidden;
+        color:white;
+    }
+    .glow{
+        position:fixed;
+        width:1000px;
+        height:1000px;
+        background:radial-gradient(circle,rgba(255,255,255,.08),transparent 60%);
+        pointer-events:none;
+        transform:translate(-50%,-50%);
+        transition:.1s;
+    }
+    .center{
+        height:100%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+    }
+    .card{
+        background:rgba(255,255,255,.06);
+        backdrop-filter:blur(20px);
+        padding:50px;
+        border-radius:30px;
+        box-shadow:0 40px 120px rgba(0,0,0,.7);
+        text-align:center;
+        transition:.4s cubic-bezier(.2,.8,.2,1);
+    }
+    .card:hover{transform:scale(1.05)}
+    input{
+        width:280px;
+        padding:14px 18px;
+        border-radius:999px;
+        border:none;
+        outline:none;
+        background:#111;
+        color:white;
+        font-size:16px;
+    }
+    button{
+        margin-top:20px;
+        padding:14px 40px;
+        border-radius:999px;
+        border:none;
+        background:white;
+        color:black;
+        font-weight:600;
+        cursor:pointer;
+        transition:.3s;
+    }
+    button:hover{transform:scale(1.1)}
+    .credit{
+        position:fixed;
+        right:15px;
+        bottom:10px;
+        font-size:11px;
+        opacity:.4;
+    }
+    </style>
+  </head>
+  <body>
 
-<style>
-*{box-sizing:border-box;font-family:system-ui}
-body{
-  margin:0;height:100vh;
-  background:#05070c;
-  color:#fff;
-  overflow:hidden;
-}
-.glow{
-  position:fixed;
-  width:1000px;height:1000px;
-  background:radial-gradient(circle,rgba(120,255,200,.12),transparent 65%);
-  pointer-events:none;
-  transform:translate(-50%,-50%);
-}
-.center{
-  height:100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.card{
-  width:900px;
-  background:rgba(255,255,255,.06);
-  backdrop-filter:blur(25px);
-  border-radius:24px;
-  padding:40px;
-}
-input,button{
-  width:100%;padding:16px;
-  border-radius:14px;border:none;
-}
-input{background:rgba(255,255,255,.12);color:#fff}
-button{background:#9dff00;color:#000;font-weight:600;cursor:pointer}
-.hidden{display:none}
+    <div class="glow" id="glow"></div>div>
 
-#admin{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:20px;
-}
-.drop{
-  border:2px dashed rgba(255,255,255,.3);
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;
-}
-#imgBox{aspect-ratio:1/1;border-radius:18px}
-#audBox{height:70px;border-radius:999px}
-
-.list,.preview,.stats{
-  background:rgba(0,0,0,.35);
-  padding:15px;border-radius:18px;
-}
-
-.word{padding:10px;cursor:pointer;border-radius:10px}
-.word:hover{background:rgba(255,255,255,.1)}
-
-footer{
-  position:fixed;
-  bottom:12px;right:18px;
-  font-size:12px;opacity:.3;
-}
-
-@media(max-width:700px){
-  .card{width:95%}
-  #admin{grid-template-columns:1fr}
-}
-</style>
-</head>
-
-<body>
-<div class="glow" id="glow"></div>
-
-<div class="center">
-  <div class="card">
-
-    <div id="landing">
-      <h1>Speaking Feelings</h1>
-      <input id="key" placeholder="Enter">
-      <button onclick="enter()">Continue</button>
-    </div>
-
-    <div id="admin" class="hidden">
-      <div>
-        <input id="k" placeholder="Keyword">
-        <input id="exp" placeholder="Expected pronunciation">
-
-        <div id="imgBox" class="drop"
-          onclick="img.click()"
-          ondragover="event.preventDefault()"
-          ondrop="dropImg(event)">IMAGE</div>
-
-        <div id="audBox" class="drop"
-          onclick="aud.click()"
-          ondragover="event.preventDefault()"
-          ondrop="dropAud(event)">AUDIO</div>
-
-        <input type="file" id="img" hidden>
-        <input type="file" id="aud" hidden>
-
-        <button onclick="add()">Add</button>
-      </div>
-
-      <div class="list" id="list"></div>
-      <div class="preview" id="preview"></div>
-      <div class="stats" id="stats"></div>
-    </div>
-
-  </div>
-</div>
-
-<footer>by Subject_666</footer>
-
-<script>
-const api="/.netlify/functions";
-const glow=document.getElementById("glow");
-document.onmousemove=e=>{
-  glow.style.left=e.clientX+"px";
-  glow.style.top=e.clientY+"px";
-};
-
-function enter(){
-  if(key.value==="Subject_666"){
-    landing.remove();
-    admin.classList.remove("hidden");
-    load();
-  }else{
-    location.href="word.html?key="+key.value;
-  }
-}
-
-const b64=f=>new Promise(r=>{
-  const fr=new FileReader();
-  fr.onload=()=>r(fr.result);
-  fr.readAsDataURL(f);
-});
-
-function dropImg(e){img.files=e.dataTransfer.files}
-function dropAud(e){aud.files=e.dataTransfer.files}
-
-async function add(){
-  await fetch(api+"/addWord",{
-    method:"POST",
-    body:JSON.stringify({
-      password:"Subject_666",
-      keyword:k.value,
-      expected:exp.value,
-      image:await b64(img.files[0]),
-      audio:await b64(aud.files[0])
-    })
-  });
-  load();
-}
-
-function load(){
-  fetch(api+"/listWords")
-  .then(r=>r.json())
-  .then(d=>{
-    list.innerHTML="";
-    d.forEach(w=>{
-      list.innerHTML+=`
-      <div class="word" onclick='show(${JSON.stringify(w)})'>
-        ${w.keyword}
-      </div>`;
+    <div class="center">
+        <div class="card">
+              <h1>Speaking Feelings</h1>
+            <input id="key" placeholder="Enter keyword">
+            <br>
+            <button onclick="go()">Start</button>button>
+        </div>div>
+    </div>div>
+  
+  <div class="credit">by Subject_666</div>div>
+  
+  <script>
+    const glow=document.getElementById("glow");
+    document.addEventListener("mousemove",e=>{
+        glow.style.left=e.clientX+"px";
+        glow.style.top=e.clientY+"px";
     });
-  });
-}
 
-function show(w){
-  preview.innerHTML=`
-    <h3>${w.keyword}</h3>
-    <img src="${w.image}" width="120">
-    <audio src="${w.audio}" controls></audio>
-    <p>${w.expected}</p>
-  `;
-  const rate=Math.round((w.success/w.attempt||0)*100);
-  stats.innerHTML=`
-    Attempts: ${w.attempt}<br>
-    Success: ${w.success}<br>
-    Rate: %${rate}
-  `;
-}
-</script>
-</body>
-</html>
+    async function go(){
+        const k = key.value;
+
+        if(k==="Subject_666"){
+              location.href="admin.html";
+              return;
+        }
+
+        const r = await fetch(`/api/word?key=${k}`);
+        if(!r.ok){ alert("Kelime yok"); return; }
+
+        const d = await r.json();
+        alert("Kelime bulundu: "+d.keyword);
+    }
+  </script>
+
+  </body>
+</html>html>
+
+  </script></h1>
+  </body>
+  </style></title>
+  </head>
