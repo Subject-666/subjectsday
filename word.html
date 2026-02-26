@@ -1,103 +1,280 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Practice | Speaking Feelings</title>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <style>
-        body { margin: 0; height: 100vh; background: #0b1120; display: flex; align-items: center; justify-content: center; font-family: sans-serif; color: white; overflow: hidden; }
-        .card { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); padding: 40px; border-radius: 40px; text-align: center; width: 380px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
-        #word-image { width: 100%; height: 230px; object-fit: cover; border-radius: 20px; margin-bottom: 20px; background: #000; }
-        h1 { font-size: 2.2rem; margin-bottom: 25px; color: #00ff88; text-transform: uppercase; letter-spacing: 2px; }
-        button { width: 100%; padding: 18px; border-radius: 18px; border: none; font-weight: bold; cursor: pointer; margin-bottom: 12px; font-size: 16px; transition: 0.2s; }
-        .btn-audio { background: white; color: black; }
-        .btn-record { background: rgba(0, 255, 136, 0.1); color: #00ff88; border: 1px solid #00ff88; }
-        .btn-record.active { background: #ff4d4d; border: none; color: white; }
-        #msg { margin-top: 15px; font-weight: bold; min-height: 24px; font-size: 14px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Practice | Speaking</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card: rgba(255,255,255,0.06);
+      --accent: #00ff9d;
+      --danger: #ff4d6a;
+      --text: #e0f7ff;
+      --text-muted: #94a3b8;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      height: 100dvh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    .card {
+      background: var(--card);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 28px;
+      padding: 2.8rem 2rem;
+      width: min(92vw, 420px);
+      box-shadow: 0 30px 70px -20px rgba(0,0,0,0.6);
+      text-align: center;
+    }
+
+    #word-image {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      border-radius: 16px;
+      background: #000;
+      margin-bottom: 1.8rem;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      margin-bottom: 2rem;
+      text-transform: capitalize;
+    }
+
+    button {
+      width: 100%;
+      padding: 1.1rem;
+      margin-bottom: 1rem;
+      border-radius: 16px;
+      border: none;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.22s ease;
+      user-select: none;
+    }
+
+    .btn-listen {
+      background: white;
+      color: #0f172a;
+    }
+    .btn-listen:hover { background: #f1f5f9; transform: translateY(-1px); }
+
+    .btn-speak {
+      background: rgba(0, 255, 157, 0.12);
+      color: var(--accent);
+      border: 1.5px solid var(--accent);
+    }
+
+    .btn-speak:hover:not(:disabled) {
+      background: rgba(0, 255, 157, 0.22);
+      transform: translateY(-1px);
+    }
+
+    .btn-speak.active {
+      background: var(--danger);
+      color: white;
+      border-color: var(--danger);
+      animation: pulse 1.8s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%,100% { transform: scale(1); }
+      50%     { transform: scale(1.04); }
+    }
+
+    #msg {
+      min-height: 2.4rem;
+      margin-top: 1.2rem;
+      font-size: 1.05rem;
+      font-weight: 500;
+      line-height: 1.45;
+    }
+
+    .success { color: var(--accent); }
+    .error   { color: var(--danger); }
+  </style>
 </head>
 <body>
 
-    <div class="card">
-        <img id="word-image" src="" alt="Loading...">
-        <h1 id="target-text">...</h1>
-        <button class="btn-audio" onclick="playAudio()">🔊 Listen</button>
-        <button id="recBtn" class="btn-record" onclick="handleMic()">🎤 Speak to Practice</button>
-        <div id="msg"></div>
-    </div>
+<div class="card">
+  <img id="word-image" src="" alt="Word visual" crossorigin="anonymous">
+  <h1 id="target-text">...</h1>
 
-    <script>
-        const params = new URLSearchParams(window.location.search);
-        const key = params.get('key')?.toLowerCase();
-        let words = JSON.parse(localStorage.getItem('subjectWords')) || [];
-        const wInfo = words.find(x => x.name.toLowerCase() === key || x.scrambled?.toLowerCase() === key);
-        
-        const target = wInfo ? wInfo.name : (key || "test");
-        document.getElementById('target-text').innerText = target;
-        if(wInfo) document.getElementById('word-image').src = wInfo.img;
+  <button class="btn-listen" type="button" onclick="playWord()">🔊 Listen</button>
+  <button id="speakBtn" class="btn-speak" type="button">🎤 Speak to Practice</button>
 
-        function playAudio() {
-            window.speechSynthesis.cancel();
-            const utter = new SpeechSynthesisUtterance(target);
-            utter.lang = 'en-US';
-            window.speechSynthesis.speak(utter);
-        }
+  <div id="msg"></div>
+</div>
 
-        let recognition;
-        async function handleMic() {
-            const btn = document.getElementById('recBtn');
-            const msg = document.getElementById('msg');
-            const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+<script>
+const msgEl     = document.getElementById('msg');
+const speakBtn  = document.getElementById('speakBtn');
+const targetEl  = document.getElementById('target-text');
+const imageEl   = document.getElementById('word-image');
 
-            if (!Speech) {
-                msg.innerText = "Error: Browser not supported.";
-                return;
-            }
+let recognition = null;
+let targetWord  = "test";
+let wordList    = [];
+let currentItem = null;
 
-            // Önce mikrofonu uyandır (Zorunlu)
-            try {
-                await navigator.mediaDevices.getUserMedia({ audio: true });
-            } catch (e) {
-                msg.innerText = "Error: Mic permission denied.";
-                return;
-            }
+// ────────────────────────────────────────────────
+function showMessage(text, className = '') {
+  msgEl.innerHTML = text;
+  msgEl.className = className;
+}
 
-            if (recognition) recognition.stop();
-            recognition = new Speech();
-            recognition.lang = 'en-US';
+// ────────────────────────────────────────────────
+function playWord() {
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(targetWord);
+  u.lang = 'en-US';
+  u.rate = 1.0;
+  u.pitch = 1.0;
+  speechSynthesis.speak(u);
+}
 
-            recognition.onstart = () => {
-                btn.classList.add('active');
-                btn.innerText = "Listening...";
-                msg.innerText = "Speak now!";
-            };
+// ────────────────────────────────────────────────
+async function startRecognition() {
+  const SpeechApi = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechApi) {
+    showMessage("This browser does not support speech recognition.", 'error');
+    return;
+  }
 
-            recognition.onresult = (e) => {
-                const res = e.results[0][0].transcript.toLowerCase();
-                if(wInfo) { wInfo.tries = (wInfo.tries || 0) + 1; }
+  // Mikrofon iznini açıkça talep et (özellikle Opera GX / mobil için önemli)
+  try {
+    await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (err) {
+    showMessage("Microphone access denied or unavailable.", 'error');
+    return;
+  }
 
-                if (res.includes(target.toLowerCase())) {
-                    msg.innerHTML = "<span style='color:#00ff88'>✓ SUCCESS!</span>";
-                    if(wInfo) { wInfo.hits = (wInfo.hits || 0) + 1; }
-                    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-                } else {
-                    msg.innerHTML = `<span style='color:#ff4d4d'>Duyulan: "${res}"</span>`;
-                }
-                localStorage.setItem('subjectWords', JSON.stringify(words));
-            };
+  // Eski tanıma nesnesini temizle
+  if (recognition) {
+    recognition.abort();
+    recognition = null;
+  }
 
-            recognition.onerror = (err) => {
-                msg.innerText = "Error: " + err.error;
-            };
+  recognition = new SpeechApi();
+  recognition.lang = 'en-US';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+  recognition.continuous = false;
 
-            recognition.onend = () => {
-                btn.classList.remove('active');
-                btn.innerText = "🎤 Speak to Practice";
-            };
+  recognition.onstart = () => {
+    speakBtn.classList.add('active');
+    speakBtn.textContent = 'Listening...';
+    showMessage('Speak now!');
+  };
 
-            recognition.start();
-        }
-    </script>
+  recognition.onresult = (event) => {
+    const spoken = event.results[0][0].transcript.trim().toLowerCase();
+    currentItem.tries = (currentItem.tries || 0) + 1;
+
+    const isCorrect = spoken.includes(targetWord.toLowerCase());
+
+    if (isCorrect) {
+      currentItem.hits = (currentItem.hits || 0) + 1;
+      showMessage('✓ Great job!', 'success');
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        startVelocity: 30,
+        origin: { y: 0.65 }
+      });
+    } else {
+      showMessage(`Heard: “${spoken}”`, 'error');
+    }
+
+    // localStorage’a yaz
+    localStorage.setItem('subjectWords', JSON.stringify(wordList));
+  };
+
+  recognition.onerror = (event) => {
+    let txt = 'Speech recognition error';
+    if (event.error === 'no-speech')      txt = 'No speech detected';
+    else if (event.error === 'audio-capture') txt = 'Microphone not working';
+    else if (event.error === 'not-allowed')   txt = 'Microphone permission denied';
+    else if (event.error) txt += `: ${event.error}`;
+
+    showMessage(txt, 'error');
+  };
+
+  recognition.onend = () => {
+    speakBtn.classList.remove('active');
+    speakBtn.textContent = '🎤 Speak to Practice';
+    // otomatik tekrar başlatma yok → kullanıcı tekrar tıklamalı
+  };
+
+  try {
+    recognition.start();
+  } catch (err) {
+    showMessage('Failed to start listening', 'error');
+  }
+}
+
+// ────────────────────────────────────────────────
+function init() {
+  const params = new URLSearchParams(location.search);
+  const key = params.get('key')?.trim().toLowerCase();
+
+  if (!key) {
+    targetEl.textContent = '(no key)';
+    showMessage('Missing ?key= parameter', 'error');
+    return;
+  }
+
+  try {
+    wordList = JSON.parse(localStorage.getItem('subjectWords') || '[]');
+  } catch {
+    wordList = [];
+  }
+
+  currentItem = wordList.find(
+    w => w.name?.toLowerCase() === key || w.scrambled?.toLowerCase() === key
+  );
+
+  if (!currentItem?.name) {
+    targetWord = key;
+    targetEl.textContent = key;
+    imageEl.src = '';
+    showMessage('Word not found in localStorage', 'error');
+    return;
+  }
+
+  targetWord = currentItem.name;
+  targetEl.textContent = targetWord;
+  imageEl.src = currentItem.img || '';
+
+  // Görsel yüklenemezse gizle/boş bırak
+  imageEl.onerror = () => { imageEl.style.display = 'none'; };
+}
+
+// Başlat
+init();
+
+// Buton olayını bağla
+speakBtn.onclick = startRecognition;
+</script>
 </body>
 </html>
