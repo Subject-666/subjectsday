@@ -1,115 +1,186 @@
 <!DOCTYPE html>
 <html lang="tr">
-  <head>
+<head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Speaking Feelings</title>
-  <style>
-    html,body{
-        margin:0;
-        height:100%;
-        background:#0b0f1a;
-        font-family:system-ui;
-        overflow:hidden;
-        color:white;
-    }
-    .glow{
-        position:fixed;
-        width:1000px;
-        height:1000px;
-        background:radial-gradient(circle,rgba(255,255,255,.08),transparent 60%);
-        pointer-events:none;
-        transform:translate(-50%,-50%);
-        transition:.1s;
-    }
-    .center{
-        height:100%;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-    }
-    .card{
-        background:rgba(255,255,255,.06);
-        backdrop-filter:blur(20px);
-        padding:50px;
-        border-radius:30px;
-        box-shadow:0 40px 120px rgba(0,0,0,.7);
-        text-align:center;
-        transition:.4s cubic-bezier(.2,.8,.2,1);
-    }
-    .card:hover{transform:scale(1.05)}
-    input{
-        width:280px;
-        padding:14px 18px;
-        border-radius:999px;
-        border:none;
-        outline:none;
-        background:#111;
-        color:white;
-        font-size:16px;
-    }
-    button{
-        margin-top:20px;
-        padding:14px 40px;
-        border-radius:999px;
-        border:none;
-        background:white;
-        color:black;
-        font-weight:600;
-        cursor:pointer;
-        transition:.3s;
-    }
-    button:hover{transform:scale(1.1)}
-    .credit{
-        position:fixed;
-        right:15px;
-        bottom:10px;
-        font-size:11px;
-        opacity:.4;
-    }
-    </style>
-  </head>
-  <body>
-
-    <div class="glow" id="glow"></div>div>
-
-    <div class="center">
-        <div class="card">
-              <h1>Speaking Feelings</h1>
-            <input id="key" placeholder="Enter keyword">
-            <br>
-            <button onclick="go()">Start</button>button>
-        </div>div>
-    </div>div>
-  
-  <div class="credit">by Subject_666</div>div>
-  
-  <script>
-    const glow=document.getElementById("glow");
-    document.addEventListener("mousemove",e=>{
-        glow.style.left=e.clientX+"px";
-        glow.style.top=e.clientY+"px";
-    });
-
-    async function go(){
-        const k = key.value;
-
-        if(k==="Subject_666"){
-              location.href="admin.html";
-              return;
+    <style>
+        :root {
+            --bg: #05070a;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --accent: #ffffff;
+            --blur: 25px;
         }
 
-        const r = await fetch(`/api/word?key=${k}`);
-        if(!r.ok){ alert("Kelime yok"); return; }
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background: var(--bg);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
 
-        const d = await r.json();
-        alert("Kelime bulundu: "+d.keyword);
-    }
-  </script>
+        /* Dinamik Arkaplan Işığı */
+        #glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            filter: blur(50px);
+            transition: transform 0.1s ease-out;
+        }
 
-  </body>
-</html>html>
+        /* Ana Kart Tasarımı */
+        .card {
+            position: relative;
+            z-index: 1;
+            background: var(--card-bg);
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            padding: 60px 40px;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
 
-  </script></h1>
-  </body>
-  </style></title>
-  </head>
+        .card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.8);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            letter-spacing: -1px;
+            background: linear-gradient(to bottom, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 25px;
+        }
+
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 24px;
+            border-radius: 18px;
+            color: white;
+            font-size: 16px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: rgba(255, 255, 255, 0.4);
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            border-radius: 18px;
+            border: none;
+            background: #fff;
+            color: #000;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        button:hover {
+            transform: scale(1.02);
+            background: #e0e0e0;
+            letter-spacing: 1px;
+        }
+
+        button:active { transform: scale(0.98); }
+
+        .credit {
+            position: fixed;
+            bottom: 20px;
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0.3;
+            font-weight: 300;
+        }
+
+        /* Küçük bir animasyon dokunuşu */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card { animation: fadeIn 1s ease-out; }
+    </style>
+</head>
+<body>
+
+    <div id="glow"></div>
+
+    <div class="card">
+        <h1>Speaking Feelings</h1>
+        <div class="input-group">
+            <input type="text" id="key" placeholder="Keyword giriniz..." autocomplete="off">
+        </div>
+        <button onclick="go()">Keşfetmeye Başla</button>
+    </div>
+
+    <div class="credit">DESIGN BY SUBJECT_666</div>
+
+    <script>
+        const glow = document.getElementById("glow");
+        
+        document.addEventListener("mousemove", e => {
+            const x = e.clientX;
+            const y = e.clientY;
+            glow.style.transform = `translate(${x}px, ${y}px)`;
+        });
+
+        async function go() {
+            const k = document.getElementById("key").value;
+            if(!k) return;
+
+            if(k === "Subject_666") {
+                location.href = "admin.html";
+                return;
+            }
+
+            try {
+                const r = await fetch(`/api/word?key=${k}`);
+                if(!r.ok) { 
+                    alert("Bu hisse dair bir kayıt bulunamadı."); 
+                    return; 
+                }
+                const d = await r.json();
+                alert("Kelime doğrulandı: " + d.keyword);
+            } catch (err) {
+                console.error("Hata:", err);
+            }
+        }
+    </script>
+</body>
+</html>
