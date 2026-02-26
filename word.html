@@ -123,46 +123,72 @@
 
         // SES TANIMA VE İZİN KONTROLÜ
         let recognition;
-        function toggleRecording() {
-            const btn = document.getElementById('recBtn');
-            const wave = document.getElementById('wave');
-            const msg = document.getElementById('msg');
-            const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-            if (!Speech) return alert("Tarayıcınız ses tanımayı desteklemiyor.");
+function toggleRecording() {
+    const btn = document.getElementById('recBtn');
+    const wave = document.getElementById('wave');
+    const msg = document.getElementById('msg');
+    
+    // Tarayıcı desteği kontrolü
+    const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Speech) {
+        alert("Üzgünüm, tarayıcınız ses tanımayı desteklemiyor. Chrome kullanmanızı öneririm.");
+        return;
+    }
 
-            if (!recognition) {
-                recognition = new Speech();
-                recognition.lang = 'en-US';
-                recognition.continuous = false;
+    // Eğer zaten çalışıyorsa durdur (Takılmayı önlemek için)
+    if (recognition) {
+        try { recognition.stop(); } catch(e) {}
+    }
 
-                recognition.onstart = () => {
-                    btn.classList.add('recording');
-                    btn.innerText = "Seni Dinliyorum...";
-                    wave.style.display = "flex";
-                    msg.innerText = "";
-                };
+    recognition = new Speech();
+    recognition.lang = 'en-US'; // TÜBİTAK projeniz Türkçe ise 'tr-TR' yapın
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
 
-                recognition.onresult = (e) => {
-                    const result = e.results[0][0].transcript.toLowerCase();
-                    if (result.includes(window.targetWord.toLowerCase())) {
-                        msg.innerHTML = '<span class="success">✓ Harika! Başarıyla Taklit Edildi.</span>';
-                        updateStats();
-                    } else {
-                        msg.innerHTML = `<span style="color: #aaa;">Duyulan: "${result}" - Tekrar Dene.</span>`;
-                    }
-                };
+    recognition.onstart = () => {
+        btn.classList.add('recording');
+        btn.innerText = "Seni Dinliyorum...";
+        wave.style.display = "flex";
+        msg.innerText = "Şimdi konuşun...";
+    };
 
-                recognition.onend = () => {
-                    btn.classList.remove('recording');
-                    btn.innerText = "Sesi Taklit Et (Kayıt)";
-                    wave.style.display = "none";
-                };
-            }
-
-            recognition.start();
+    recognition.onresult = (e) => {
+        const result = e.results[0][0].transcript.toLowerCase();
+        // window.targetWord admin panelinden gelen doğru kelime
+        if (result.includes(window.targetWord.toLowerCase())) {
+            msg.innerHTML = '<span class="success">✓ Harika! Doğru Telaffuz.</span>';
+            updateStats();
+        } else {
+            msg.innerHTML = `<span style="color: #ff4d4d;">Duyulan: "${result}" - Tekrar Dene.</span>`;
         }
+    };
 
+    recognition.onerror = (event) => {
+        console.error("Hata oluştu: ", event.error);
+        if(event.error === 'not-allowed') {
+            alert("Mikrofon izni reddedildi. Lütfen adres barındaki kilit ikonundan izin verin.");
+        }
+        resetButton();
+    };
+
+    recognition.onend = () => {
+        resetButton();
+    };
+
+    try {
+        recognition.start();
+    } catch (err) {
+        console.error("Başlatma hatası:", err);
+        resetButton();
+    }
+
+    function resetButton() {
+        btn.classList.remove('recording');
+        btn.innerText = "Sesi Taklit Et (Kayıt)";
+        wave.style.display = "none";
+    }
+}
         // BAŞARIYI ADMIN PANELINE KAYDETME
         function updateStats() {
             let data = JSON.parse(localStorage.getItem('subjectWords')) || [];
@@ -176,3 +202,4 @@
     </script>
 </body>
 </html>
+
