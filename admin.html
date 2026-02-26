@@ -28,11 +28,16 @@
             background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 100;
             align-items: center; justify-content: center;
         }
-        .modal-content { background: var(--panel); padding: 40px; border-radius: 30px; width: 90%; max-width: 600px; position: relative; }
+        .modal-content { background: var(--panel); padding: 40px; border-radius: 30px; width: 90%; max-width: 600px; position: relative; max-height: 90vh; overflow-y: auto; }
         .close-modal { position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 1.5rem; }
 
         input { background: #161b22; border: 1px solid var(--border); padding: 12px; border-radius: 10px; color: white; width: 100%; margin-bottom: 10px; }
-        .btn-save { background: var(--accent); color: black; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .btn-save { background: var(--accent); color: black; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
+        
+        .test-zone { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
+        .btn-test { background: #fff; color: #000; border: none; padding: 10px; border-radius: 8px; font-weight: bold; flex: 1; cursor: pointer; }
+        .btn-mic-test { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid var(--border); padding: 10px; border-radius: 8px; flex: 1; cursor: pointer; }
+        .btn-mic-test.active { background: #ff4d4d; border: none; }
     </style>
 </head>
 <body>
@@ -46,9 +51,9 @@
         <div class="card">
             <h3>Yeni Kelime Ekle</h3>
             <div style="display:flex; gap:10px;">
-                <input type="text" id="new-word" placeholder="Kelime">
+                <input type="text" id="new-word" placeholder="Kelime (Örn: Apple)">
                 <input type="text" id="new-img" placeholder="Görsel URL">
-                <button class="btn-save" onclick="addWord()">Ekle</button>
+                <button class="btn-save" style="margin:0; width:auto" onclick="addWord()">Ekle</button>
             </div>
         </div>
 
@@ -58,7 +63,7 @@
                     <tr>
                         <th>Kelime</th>
                         <th>İstatistik</th>
-                        <th>Detay</th>
+                        <th>Detay / Test</th>
                         <th>İşlem</th>
                     </tr>
                 </thead>
@@ -70,16 +75,23 @@
     <div id="detail-modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal()">×</span>
-            <h2 id="modal-title">Kelime Detayı</h2>
-            <canvas id="myChart" style="margin: 20px 0;"></canvas>
+            <h2 id="modal-title">Kelime Analizi</h2>
+            
+            <canvas id="myChart" style="margin: 20px 0; max-height: 200px;"></canvas>
             
             <div id="edit-area">
-                <label>Kelimeyi Düzenle:</label>
+                <label>Kelime:</label>
                 <input type="text" id="edit-name">
                 <label>Görsel URL:</label>
                 <input type="text" id="edit-img">
                 <button class="btn-save" onclick="saveEdit()">Değişiklikleri Kaydet</button>
             </div>
+
+            <div class="test-zone">
+                <button class="btn-test" onclick="playTestAudio()">🔊 Sesi Dinle</button>
+                <button id="micTestBtn" class="btn-mic-test" onclick="startMicTest()">🎤 Kayıt Testi</button>
+            </div>
+            <div id="test-result" style="margin-top:10px; text-align:center; font-weight:bold; font-size:14px"></div>
         </div>
     </div>
 
@@ -95,9 +107,9 @@
                 body.innerHTML += `
                     <tr>
                         <td><strong>${w.name}</strong></td>
-                        <td>${w.hits} Başarı / %${w.score} Skor</td>
+                        <td>${w.hits || 0} Başarı / %${w.score || 0}</td>
                         <td><button class="btn-icon" onclick="openModal(${w.id})">➔</button></td>
-                        <td><button style="color:red; background:none; border:none; cursor:pointer" onclick="deleteWord(${w.id})">Sil</button></td>
+                        <td><button style="color:#ff4d4d; background:none; border:none; cursor:pointer" onclick="deleteWord(${w.id})">Sil</button></td>
                     </tr>
                 `;
             });
@@ -110,6 +122,8 @@
             if(!name) return;
             words.push({ id: Date.now(), name, img: img || 'https://picsum.photos/400/250', hits: 0, score: 0, tries: 0 });
             renderTable();
+            document.getElementById('new-word').value = '';
+            document.getElementById('new-img').value = '';
         }
 
         function openModal(id) {
@@ -118,23 +132,53 @@
             document.getElementById('modal-title').innerText = word.name + " Analizi";
             document.getElementById('edit-name').value = word.name;
             document.getElementById('edit-img').value = word.img;
+            document.getElementById('test-result').innerText = '';
             document.getElementById('detail-modal').style.display = 'flex';
             
-            // Grafik Çizimi
             const ctx = document.getElementById('myChart').getContext('2d');
             if(chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
-                type: 'bar',
+                type: 'doughnut',
                 data: {
-                    labels: ['Başarılı', 'Hatalı Deneme'],
+                    labels: ['Başarılı', 'Hatalı'],
                     datasets: [{
-                        label: 'Telaffuz Verileri',
-                        data: [word.hits, word.tries - word.hits < 0 ? 0 : word.tries - word.hits],
-                        backgroundColor: ['#00ff88', '#ff4d4d']
+                        data: [word.hits, (word.tries || 0) - (word.hits || 0)],
+                        backgroundColor: ['#00ff88', '#ff4d4d'],
+                        borderWidth: 0
                     }]
                 },
-                options: { responsive: true, plugins: { legend: { display: false } } }
+                options: { responsive: true, cutout: '70%' }
             });
+        }
+
+        function playTestAudio() {
+            const name = document.getElementById('edit-name').value;
+            const utter = new SpeechSynthesisUtterance(name);
+            utter.lang = 'en-US';
+            window.speechSynthesis.speak(utter);
+        }
+
+        function startMicTest() {
+            const btn = document.getElementById('micTestBtn');
+            const res = document.getElementById('test-result');
+            const target = document.getElementById('edit-name').value.toLowerCase();
+            const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+            if(!Speech) return alert("Tarayıcı desteklenmiyor.");
+            const rec = new Speech();
+            rec.lang = 'en-US';
+
+            rec.onstart = () => { btn.classList.add('active'); btn.innerText = "Dinleniyor..."; res.innerText = ""; };
+            rec.onresult = (e) => {
+                const result = e.results[0][0].transcript.toLowerCase();
+                if(result.includes(target)) {
+                    res.innerHTML = '<span style="color:#00ff88">✓ Sistem kelimeyi tanıdı!</span>';
+                } else {
+                    res.innerHTML = `<span style="color:#ff4d4d">Tanınan: "${result}"</span>`;
+                }
+            };
+            rec.onend = () => { btn.classList.remove('active'); btn.innerText = "🎤 Kayıt Testi"; };
+            rec.start();
         }
 
         function saveEdit() {
@@ -146,17 +190,14 @@
         }
 
         function deleteWord(id) {
-            words = words.filter(w => w.id !== id);
-            renderTable();
+            if(confirm("Silmek istediğinize emin misiniz Efendim?")) {
+                words = words.filter(w => w.id !== id);
+                renderTable();
+            }
         }
 
         function closeModal() { document.getElementById('detail-modal').style.display = 'none'; }
-        
         renderTable();
-    </script>
-</body>
-</html>
-        refreshUI();
     </script>
 </body>
 </html>
