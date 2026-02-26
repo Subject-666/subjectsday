@@ -9,9 +9,21 @@
         * { box-sizing: border-box; }
         html, body { margin: 0; height: 100%; background: #0b0f1a; font-family: sans-serif; overflow: hidden; color: white; }
         .container { height: 100%; display: flex; align-items: center; justify-content: center; }
-        .card { background: rgba(255, 255, 255, .06); backdrop-filter: blur(25px); padding: 40px; border-radius: 40px; text-align: center; width: 90%; max-width: 450px; border: 1px solid rgba(255,255,255,0.1); }
-        #word-image { width: 100%; height: 260px; object-fit: cover; border-radius: 25px; margin-bottom: 25px; background: #000; }
+        .card { 
+            background: rgba(255, 255, 255, .06); 
+            backdrop-filter: blur(25px); 
+            padding: 40px; 
+            border-radius: 40px; 
+            text-align: center; 
+            width: 90%; 
+            max-width: 450px; 
+            border: 1px solid rgba(255,255,255,0.1); 
+        }
+        #word-image { width: 100%; height: 260px; object-fit: cover; border-radius: 25px; margin-bottom: 20px; background: #000; }
         
+        /* Kelime Başlığı */
+        #target-display { font-size: 2rem; font-weight: 800; margin-bottom: 20px; letter-spacing: 2px; text-transform: uppercase; color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.3); }
+
         .wave-container { display: none; align-items: center; justify-content: center; gap: 4px; height: 40px; margin: 15px 0; }
         .wave-bar { width: 4px; height: 10px; background: #00ff88; border-radius: 3px; animation: wave 0.5s infinite alternate; }
         @keyframes wave { from { transform: scaleY(1); } to { transform: scaleY(2); } }
@@ -19,7 +31,7 @@
         button { padding: 18px; border-radius: 20px; border: none; font-weight: 700; cursor: pointer; transition: 0.3s; width: 100%; font-size: 16px; margin-bottom: 10px; }
         .btn-audio { background: white; color: black; }
         .btn-record { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
-        .btn-record.active { background: #ff3b30; }
+        .btn-record.active { background: #ff3b30; border: none; }
         #msg { margin-top: 15px; font-weight: bold; min-height: 24px; }
     </style>
 </head>
@@ -27,12 +39,19 @@
 
     <div class="container">
         <div class="card">
-            <img id="word-image" src="" alt="Yükleniyor...">
+            <img id="word-image" src="" alt="Duygu Görseli">
+            
+            <div id="target-display">Yükleniyor...</div>
+
             <div id="wave" class="wave-container">
                 <div class="wave-bar"></div><div class="wave-bar" style="animation-delay: 0.1s"></div><div class="wave-bar" style="animation-delay: 0.2s"></div>
             </div>
-            <button class="btn-audio" onclick="playAudio()">Sesi Dinle</button>
-            <button id="recBtn" class="btn-record" onclick="handleMic()">Sesi Taklit Et (Kayıt)</button>
+
+            <div class="action-zone">
+                <button class="btn-audio" onclick="playAudio()">Sesi Dinle</button>
+                <button id="recBtn" class="btn-record" onclick="handleMic()">Sesi Taklit Et (Kayıt)</button>
+            </div>
+
             <div id="msg"></div>
         </div>
     </div>
@@ -41,10 +60,18 @@
         const urlParams = new URLSearchParams(window.location.search);
         const keyword = urlParams.get('key')?.toLowerCase();
         let words = JSON.parse(localStorage.getItem('subjectWords')) || [];
-        const wordInfo = words.find(w => w.name.toLowerCase() === keyword);
         
+        // Hem isme hem karışık haline göre arama yap
+        const wordInfo = words.find(w => w.name.toLowerCase() === keyword || w.scrambled?.toLowerCase() === keyword);
+        
+        // Global değişkenler
         window.targetWord = wordInfo ? wordInfo.name : keyword;
-        if(wordInfo) document.getElementById('word-image').src = wordInfo.img;
+        
+        // UI Güncelleme
+        if(wordInfo) {
+            document.getElementById('word-image').src = wordInfo.img;
+        }
+        document.getElementById('target-display').innerText = window.targetWord;
 
         function playAudio() {
             const utter = new SpeechSynthesisUtterance(window.targetWord);
@@ -64,26 +91,48 @@
             rec.lang = 'en-US';
 
             rec.onstart = () => { 
-                btn.classList.add('active'); btn.innerText = "Dinleniyor..."; 
-                wave.style.display = "flex"; msg.innerText = "";
+                btn.classList.add('active'); 
+                btn.innerText = "Seni Dinliyorum..."; 
+                wave.style.display = "flex"; 
+                msg.innerText = "";
             };
 
             rec.onresult = (e) => {
                 const result = e.results[0][0].transcript.toLowerCase();
-                // Admin verilerini güncelle
-                if(wordInfo) wordInfo.tries++; 
+                
+                // İstatistik takibi (Admin paneli için)
+                if(wordInfo) {
+                    if(!wordInfo.tries) wordInfo.tries = 0;
+                    wordInfo.tries++; 
+                }
 
                 if (result.includes(window.targetWord.toLowerCase())) {
-                    msg.innerHTML = '<span style="color:#00ff88">✓ MÜKEMMEL!</span>';
-                    if(wordInfo) { wordInfo.hits++; wordInfo.score = Math.round((wordInfo.hits / wordInfo.tries) * 100); }
-                    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                    msg.innerHTML = '<span style="color:#00ff88">✓ MÜKEMMEL TELAFFUZ!</span>';
+                    
+                    if(wordInfo) { 
+                        wordInfo.hits++; 
+                        wordInfo.score = Math.round((wordInfo.hits / wordInfo.tries) * 100); 
+                    }
+
+                    // Konfeti Kutlaması
+                    confetti({
+                        particleCount: 150,
+                        spread: 70,
+                        origin: { y: 0.6 },
+                        colors: ['#00ff88', '#ffffff']
+                    });
                 } else {
-                    msg.innerHTML = `<span style="color:#ff4d4d">Duyulan: "${result}"</span>`;
+                    msg.innerHTML = `<span style="color:#ff4d4d">Duyulan: "${result}" - Tekrar Dene!</span>`;
                 }
                 localStorage.setItem('subjectWords', JSON.stringify(words));
             };
 
-            rec.onend = () => { btn.classList.remove('active'); btn.innerText = "Sesi Taklit Et (Kayıt)"; wave.style.display = "none"; };
+            rec.onend = () => { 
+                btn.classList.remove('active'); 
+                btn.innerText = "Sesi Taklit Et (Kayıt)"; 
+                wave.style.display = "none"; 
+            };
+
             rec.start();
         }
     </script>
