@@ -34,31 +34,26 @@
 
         /* WHATSAPP TARZI SES DALGASI */
         .wave-container {
-            display: none; /* Sadece kayıt sırasında görünür */
+            display: none;
             align-items: center;
             justify-content: center;
-            gap: 3px;
-            height: 30px;
-            margin: 20px 0;
+            gap: 4px;
+            height: 40px;
+            margin: 15px 0;
         }
 
         .wave-bar {
-            width: 3px;
-            height: 10px;
-            background: #fff;
-            border-radius: 3px;
-            animation: wave 0.5s ease-in-out infinite alternate;
+            width: 4px; height: 10px; background: #fff;
+            border-radius: 3px; animation: wave 0.5s ease-in-out infinite alternate;
         }
-
-        /* Farklı bar boyları ve gecikmelerle gerçekçi dalga */
-        .wave-bar:nth-child(2) { animation-delay: 0.1s; height: 15px; }
-        .wave-bar:nth-child(3) { animation-delay: 0.2s; height: 25px; }
-        .wave-bar:nth-child(4) { animation-delay: 0.15s; height: 18px; }
-        .wave-bar:nth-child(5) { animation-delay: 0.3s; height: 12px; }
+        .wave-bar:nth-child(2) { animation-delay: 0.1s; height: 20px; }
+        .wave-bar:nth-child(3) { animation-delay: 0.2s; height: 35px; }
+        .wave-bar:nth-child(4) { animation-delay: 0.15s; height: 25px; }
+        .wave-bar:nth-child(5) { animation-delay: 0.3s; height: 15px; }
 
         @keyframes wave {
             from { transform: scaleY(1); opacity: 0.5; }
-            to { transform: scaleY(1.8); opacity: 1; }
+            to { transform: scaleY(1.5); opacity: 1; }
         }
 
         .action-zone { display: flex; flex-direction: column; gap: 12px; }
@@ -71,17 +66,20 @@
 
         .btn-audio { background: white; color: black; }
         .btn-record { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
-        .btn-record.recording { background: #ff3b30; border: none; }
+        .btn-record.recording { background: #ff3b30; border: none; animation: pulse 1.5s infinite; }
 
-        #msg { margin-top: 15px; font-size: 14px; min-height: 20px; }
-        .success { color: #00ff88; font-weight: bold; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(0.98); } 100% { transform: scale(1); } }
+
+        #msg { margin-top: 15px; font-size: 14px; min-height: 24px; font-weight: 500; }
+        .success { color: #00ff88; }
+        .error { color: #ff4d4d; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div class="card">
-            <img id="word-image" src="" alt="Duygu">
+            <img id="word-image" src="" alt="Yükleniyor...">
             
             <div id="wave" class="wave-container">
                 <div class="wave-bar"></div>
@@ -101,6 +99,7 @@
     </div>
 
     <script>
+        // 1. VERI YUKLEME
         const urlParams = new URLSearchParams(window.location.search);
         const keyword = urlParams.get('key')?.toLowerCase();
         const localData = JSON.parse(localStorage.getItem('subjectWords')) || [];
@@ -113,106 +112,102 @@
         if (wordInfo) {
             document.getElementById('word-image').src = wordInfo.img;
             window.targetWord = wordInfo.name;
+        } else {
+            window.targetWord = keyword || "test"; 
+            document.getElementById('word-image').src = "https://via.placeholder.com/500x300?text=" + window.targetWord;
         }
 
+        // 2. SES DINLETME
         function playAudio() {
             const utter = new SpeechSynthesisUtterance(window.targetWord);
             utter.lang = 'en-US';
             window.speechSynthesis.speak(utter);
         }
 
-        // SES TANIMA VE İZİN KONTROLÜ
-       let recognition;
+        // 3. SES KAYIT VE TANIMA
+        let recognition;
+        let timeoutTimer;
 
-// Sayfa yüklendiğinde admin verisini çek
-const urlParams = new URLSearchParams(window.location.search);
-const keyword = urlParams.get('key')?.toLowerCase();
-const localData = JSON.parse(localStorage.getItem('subjectWords')) || [];
-const wordInfo = localData.find(w => w.name.toLowerCase() === keyword || w.scrambled.toLowerCase() === keyword);
+        async function toggleRecording() {
+            const btn = document.getElementById('recBtn');
+            const wave = document.getElementById('wave');
+            const msg = document.getElementById('msg');
+            const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-if (wordInfo) {
-    document.getElementById('word-image').src = wordInfo.img;
-    window.targetWord = wordInfo.name;
-} else {
-    // Eğer test yapıyorsanız ve admin'de kelime yoksa hata almamak için:
-    window.targetWord = keyword || "test"; 
-}
-
-function playAudio() {
-    const utter = new SpeechSynthesisUtterance(window.targetWord);
-    utter.lang = 'en-US';
-    window.speechSynthesis.speak(utter);
-}
-
-function toggleRecording() {
-    const btn = document.getElementById('recBtn');
-    const wave = document.getElementById('wave');
-    const msg = document.getElementById('msg');
-    
-    const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
-    if (!Speech) {
-        msg.innerHTML = '<span class="error">Tarayıcı desteklenmiyor (Chrome deneyin).</span>';
-        return;
-    }
-
-    // Tuşun takılı kalmasını önlemek için reset fonksiyonu
-    const resetUI = () => {
-        btn.classList.remove('recording');
-        btn.innerText = "Sesi Taklit Et (Kayıt)";
-        wave.style.display = "none";
-    };
-
-    try {
-        recognition = new Speech();
-        recognition.lang = 'en-US';
-        recognition.interimResults = false;
-
-        recognition.onstart = () => {
-            btn.classList.add('recording');
-            btn.innerText = "Dinleniyor...";
-            wave.style.display = "flex";
-            msg.innerText = "Konuşun...";
-        };
-
-        recognition.onresult = (e) => {
-            const result = e.results[0][0].transcript.toLowerCase();
-            if (result.includes(window.targetWord.toLowerCase())) {
-                msg.innerHTML = '<span class="success">✓ Doğru!</span>';
-                // Başarıyı kaydet
-                let data = JSON.parse(localStorage.getItem('subjectWords')) || [];
-                const idx = data.findIndex(w => w.name === window.targetWord);
-                if(idx !== -1) { data[idx].hits++; localStorage.setItem('subjectWords', JSON.stringify(data)); }
-            } else {
-                msg.innerHTML = `<span style="color:#aaa">Duyulan: "${result}"</span>`;
+            if (!Speech) {
+                msg.innerHTML = '<span class="error">Tarayıcı desteklemiyor. Chrome deneyin.</span>';
+                return;
             }
-        };
 
-        recognition.onerror = (err) => {
-            msg.innerHTML = `<span class="error">Hata: ${err.error}</span>`;
-            resetUI();
-        };
+            // Arayüzü Sıfırlama Fonksiyonu
+            const resetUI = () => {
+                btn.classList.remove('recording');
+                btn.innerText = "Sesi Taklit Et (Kayıt)";
+                wave.style.display = "none";
+                clearTimeout(timeoutTimer);
+            };
 
-        recognition.onend = () => { resetUI(); };
+            // Önce Mikrofon İznini Zorla (Opera GX için kritik)
+            try {
+                await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch (err) {
+                msg.innerHTML = '<span class="error">Mikrofon izni reddedildi!</span>';
+                return;
+            }
 
-        recognition.start();
+            if (recognition) { try { recognition.stop(); } catch(e) {} }
 
-    } catch (e) {
-        msg.innerHTML = `<span class="error">Başlatılamadı: ${e.message}</span>`;
-        resetUI();
-    }
-}
-        // BAŞARIYI ADMIN PANELINE KAYDETME
+            recognition = new Speech();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                btn.classList.add('recording');
+                btn.innerText = "Dinleniyor...";
+                wave.style.display = "flex";
+                msg.innerText = "Konuşun...";
+
+                // 5 Saniye Zaman Aşımı (Takılmayı önlemek için)
+                timeoutTimer = setTimeout(() => {
+                    recognition.stop();
+                    msg.innerHTML = '<span class="error">Ses algılanamadı, süre doldu.</span>';
+                    resetUI();
+                }, 5000);
+            };
+
+            recognition.onresult = (e) => {
+                const result = e.results[0][0].transcript.toLowerCase();
+                if (result.includes(window.targetWord.toLowerCase())) {
+                    msg.innerHTML = '<span class="success">✓ Başarıyla Taklit Edildi!</span>';
+                    updateStats();
+                } else {
+                    msg.innerHTML = `<span style="color: #aaa;">Duyulan: "${result}"</span>`;
+                }
+            };
+
+            recognition.onerror = (err) => {
+                console.error("Hata:", err.error);
+                msg.innerHTML = `<span class="error">Hata: ${err.error}</span>`;
+                resetUI();
+            };
+
+            recognition.onend = () => { resetUI(); };
+
+            try {
+                recognition.start();
+            } catch (e) {
+                resetUI();
+            }
+        }
+
         function updateStats() {
             let data = JSON.parse(localStorage.getItem('subjectWords')) || [];
             const index = data.findIndex(w => w.name === window.targetWord);
             if (index !== -1) {
-                data[index].hits += 1; // Tahmin sayısını artır
-                data[index].score = Math.min(100, data[index].score + 5); // Puanı artır
+                data[index].hits += 1;
                 localStorage.setItem('subjectWords', JSON.stringify(data));
             }
         }
     </script>
 </body>
 </html>
-
