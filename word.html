@@ -1,204 +1,148 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<title>Speaking Feelings</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speaking Feelings | Experience</title>
+    <style>
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0; height: 100%; background: #0b0f1a;
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow: hidden; color: white;
+        }
 
-<style>
-*{box-sizing:border-box;font-family:system-ui}
-html,body{margin:0;height:100%}
+        .glow {
+            position: fixed; width: 800px; height: 800px;
+            background: radial-gradient(circle, rgba(255,255,255,.06), transparent 65%);
+            pointer-events: none; left: 50%; top: 50%;
+            transform: translate(-50%, -50%); z-index: 0;
+        }
 
-body{
-  background:#0b0e14;
-  color:#fff;
-  overflow:hidden;
-}
+        .container {
+            height: 100%; display: flex; align-items: center;
+            justify-content: center; z-index: 1; position: relative;
+        }
 
-/* ===== GLOW ===== */
-.glow{
-  position:fixed;
-  width:1000px;
-  height:1000px;
-  background:radial-gradient(circle,rgba(180,220,255,.18),transparent 65%);
-  pointer-events:none;
-  transform:translate(-50%,-50%);
-  transition:.12s ease-out;
-}
+        .card {
+            background: rgba(255, 255, 255, .06);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            padding: 40px; border-radius: 40px; text-align: center;
+            width: 90%; max-width: 450px;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
 
-/* ===== CENTER ===== */
-.center{
-  height:100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
+        /* 1. GÖRSEL AREA */
+        #word-image {
+            width: 100%; height: 280px; object-fit: cover;
+            border-radius: 25px; margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: #000;
+        }
 
-/* ===== CARD ===== */
-.card{
-  width:420px;
-  padding:38px;
-  border-radius:26px;
-  background:rgba(255,255,255,.08);
-  backdrop-filter:blur(24px);
-  box-shadow:0 40px 120px rgba(0,0,0,.6);
-  transition:.35s ease;
-  transform-style:preserve-3d;
-}
+        .action-zone { display: flex; flex-direction: column; gap: 15px; }
 
-/* ===== TEXT ===== */
-h1{
-  margin:0 0 26px;
-  font-weight:500;
-  letter-spacing:.6px;
-}
+        /* 2. SES (DİNLE) VE 3. KAYIT (KONUŞ) BUTONLARI */
+        button {
+            padding: 18px; border-radius: 20px; border: none;
+            font-weight: 700; cursor: pointer; transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            font-size: 16px; width: 100%;
+        }
 
-/* ===== INPUT ===== */
-input{
-  width:100%;
-  padding:16px;
-  border-radius:16px;
-  border:none;
-  background:rgba(255,255,255,.14);
-  color:white;
-  font-size:16px;
-  outline:none;
-}
+        .btn-audio { background: white; color: black; }
+        .btn-record { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
+        
+        .btn-record.active { 
+            background: #ff3b30; border-color: #ff3b30; 
+            animation: pulse 1.5s infinite; 
+        }
 
-/* ===== BUTTON ===== */
-button{
-  width:100%;
-  margin-top:22px;
-  padding:16px;
-  border:none;
-  border-radius:999px;
-  background:#ffffff;
-  color:#000;
-  font-weight:600;
-  cursor:pointer;
-  transition:.25s ease;
-  position:relative;
-  overflow:hidden;
-}
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
 
-/* ===== LOADING ===== */
-button.loading{
-  pointer-events:none;
-  background:#e5e5e5;
-}
-button.loading::after{
-  content:"";
-  position:absolute;
-  width:22px;
-  height:22px;
-  border:3px solid #000;
-  border-top-color:transparent;
-  border-radius:50%;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  animation:spin .8s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* ===== PAGE MORPH ===== */
-.page-leave{
-  animation:leave .45s forwards;
-}
-@keyframes leave{
-  to{opacity:0;transform:scale(.96)}
-}
-
-/* ===== FOOTER ===== */
-footer{
-  position:fixed;
-  bottom:14px;
-  right:18px;
-  font-size:12px;
-  opacity:.25;
-}
-</style>
+        #msg { margin-top: 20px; font-size: 14px; min-height: 20px; font-weight: 500; }
+        .success { color: #00ff88; }
+        .error { color: #ff4d4d; }
+    </style>
 </head>
-
 <body>
 
-<div class="glow" id="glow"></div>
+    <div class="glow"></div>
 
-<div class="center">
-  <div class="card" id="card">
-    <h1>Speaking Feelings</h1>
-    <input id="input" placeholder="Enter">
-    <button id="btn" onclick="go()">Continue</button>
-  </div>
-</div>
+    <div class="container">
+        <div class="card">
+            <img id="word-image" src="" alt="Duygu">
+            
+            <div class="action-zone">
+                <button class="btn-audio" onclick="playAudio()">Sesi Dinle</button>
+                
+                <button id="recBtn" class="btn-record" onclick="startRecording()">Sesi Taklit Et (Kayıt)</button>
+            </div>
 
-<footer>by Subject_666</footer>
+            <div id="msg"></div>
+        </div>
+    </div>
 
-<!-- hover sound -->
-<audio id="hoverSound" preload="auto">
-  <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=">
-</audio>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const keyword = urlParams.get('key')?.toLowerCase();
+        const localData = JSON.parse(localStorage.getItem('subjectWords')) || [];
 
-<script>
-const glow=document.getElementById("glow");
-const card=document.getElementById("card");
-const btn=document.getElementById("btn");
-const hoverSound=document.getElementById("hoverSound");
+        // Admin panelindeki veriyi bul (Scrambled veya Normal)
+        const wordInfo = localData.find(w => 
+            w.name.toLowerCase() === keyword || 
+            w.scrambled.toLowerCase() === keyword
+        );
 
-/* ===== MOUSE GLOW + CARD BEND ===== */
-document.addEventListener("mousemove",e=>{
-  glow.style.left=e.clientX+"px";
-  glow.style.top=e.clientY+"px";
+        if (wordInfo) {
+            document.getElementById('word-image').src = wordInfo.img;
+            window.targetWord = wordInfo.name;
+        } else {
+            alert("Kelime veritabanında yok!");
+            location.href = "index.html";
+        }
 
-  const r=card.getBoundingClientRect();
-  const cx=r.left+r.width/2;
-  const cy=r.top+r.height/2;
+        // SES DİNLEME FONKSİYONU
+        function playAudio() {
+            const utter = new SpeechSynthesisUtterance(window.targetWord);
+            utter.lang = 'en-US'; 
+            window.speechSynthesis.speak(utter);
+        }
 
-  const dx=(e.clientX-cx)/25;
-  const dy=(e.clientY-cy)/25;
+        // KAYIT VE TELAFFUZ KONTROLÜ
+        function startRecording() {
+            const btn = document.getElementById('recBtn');
+            const msg = document.getElementById('msg');
+            const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-  card.style.transform=`rotateX(${-dy}deg) rotateY(${dx}deg)`;
-});
+            if (!Recognition) return alert("Tarayıcı desteklenmiyor.");
 
-/* ===== BUTTON INTERACTION ===== */
-btn.addEventListener("mouseenter",()=>{
-  hoverSound.currentTime=0;
-  hoverSound.play().catch(()=>{});
-  if(navigator.vibrate) navigator.vibrate(10);
-});
+            const rec = new Recognition();
+            rec.lang = 'en-US';
 
-btn.addEventListener("mousemove",e=>{
-  const r=btn.getBoundingClientRect();
-  const x=e.clientX-r.left-r.width/2;
-  const y=e.clientY-r.top-r.height/2;
-  btn.style.transform=`translate(${x/12}px,${y/12}px) scale(1.06)`;
-});
-btn.addEventListener("mouseleave",()=>{
-  btn.style.transform="scale(1)";
-});
+            rec.onstart = () => {
+                btn.classList.add('active');
+                btn.innerText = "Dinleniyor...";
+                msg.innerText = "";
+            };
 
-/* ===== PAGE MORPH ===== */
-function pageMorph(url){
-  document.body.classList.add("page-leave");
-  setTimeout(()=>location.href=url,420);
-}
+            rec.onresult = (e) => {
+                const result = e.results[0][0].transcript.toLowerCase();
+                if (result.includes(window.targetWord.toLowerCase())) {
+                    msg.innerHTML = '<span class="success">✓ Doğru Telaffuz!</span>';
+                    // Admin paneline başarıyı işleme kodu buraya gelebilir
+                } else {
+                    msg.innerHTML = `<span class="error">× Yanlış (Duyulan: ${result})</span>`;
+                }
+            };
 
-/* ===== GO ===== */
-function go(){
-  const v=input.value.trim();
-  if(!v) return;
+            rec.onend = () => {
+                btn.classList.remove('active');
+                btn.innerText = "Sesi Taklit Et (Kayıt)";
+            };
 
-  btn.classList.add("loading");
-  if(navigator.vibrate) navigator.vibrate([20,10,20]);
-
-  setTimeout(()=>{
-    if(v==="Subject_666"){
-      pageMorph("admin.html");
-    }else{
-      pageMorph("word.html?key="+encodeURIComponent(v));
-    }
-  },600);
-}
-</script>
-
+            rec.start();
+        }
+    </script>
 </body>
 </html>
