@@ -1,28 +1,29 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Speaking Feelings | Practice</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Practice | Speaking Feelings</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        body { margin: 0; height: 100vh; background: #0b0f1a; display: flex; align-items: center; justify-content: center; font-family: sans-serif; color: white; }
-        .card { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); padding: 40px; border-radius: 40px; text-align: center; width: 450px; border: 1px solid rgba(255,255,255,0.1); }
-        #word-image { width: 100%; height: 250px; object-fit: cover; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h1 { font-size: 2.5rem; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 3px; color: #00ff88; }
-        button { width: 100%; padding: 18px; border-radius: 20px; border: none; font-weight: bold; cursor: pointer; margin-bottom: 10px; font-size: 16px; transition: 0.3s; }
+        body { margin: 0; height: 100vh; background: #0b1120; display: flex; align-items: center; justify-content: center; font-family: sans-serif; color: white; overflow: hidden; }
+        .card { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); padding: 40px; border-radius: 40px; text-align: center; width: 380px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+        #word-image { width: 100%; height: 230px; object-fit: cover; border-radius: 20px; margin-bottom: 20px; background: #000; }
+        h1 { font-size: 2.2rem; margin-bottom: 25px; color: #00ff88; text-transform: uppercase; letter-spacing: 2px; }
+        button { width: 100%; padding: 18px; border-radius: 18px; border: none; font-weight: bold; cursor: pointer; margin-bottom: 12px; font-size: 16px; transition: 0.2s; }
         .btn-audio { background: white; color: black; }
-        .btn-record { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
-        .btn-record.active { background: #ff4d4d; border: none; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-        #msg { margin-top: 20px; min-height: 24px; font-weight: bold; }
+        .btn-record { background: rgba(0, 255, 136, 0.1); color: #00ff88; border: 1px solid #00ff88; }
+        .btn-record.active { background: #ff4d4d; border: none; color: white; }
+        #msg { margin-top: 15px; font-weight: bold; min-height: 24px; font-size: 14px; }
     </style>
 </head>
 <body>
+
     <div class="card">
-        <img id="word-image" src="" alt="Duygu">
-        <h1 id="target-text">Yükleniyor...</h1>
-        <button class="btn-audio" onclick="playAudio()">🔊 Sesi Dinle</button>
-        <button id="recBtn" class="btn-record" onclick="handleMic()">🎤 Taklit Et (Kayıt)</button>
+        <img id="word-image" src="" alt="Loading...">
+        <h1 id="target-text">...</h1>
+        <button class="btn-audio" onclick="playAudio()">🔊 Listen</button>
+        <button id="recBtn" class="btn-record" onclick="handleMic()">🎤 Speak to Practice</button>
         <div id="msg"></div>
     </div>
 
@@ -32,36 +33,70 @@
         let words = JSON.parse(localStorage.getItem('subjectWords')) || [];
         const wInfo = words.find(x => x.name.toLowerCase() === key || x.scrambled?.toLowerCase() === key);
         
-        const target = wInfo ? wInfo.name : key;
+        const target = wInfo ? wInfo.name : (key || "test");
         document.getElementById('target-text').innerText = target;
         if(wInfo) document.getElementById('word-image').src = wInfo.img;
 
         function playAudio() {
+            window.speechSynthesis.cancel();
             const utter = new SpeechSynthesisUtterance(target);
-            utter.lang = 'en-US'; window.speechSynthesis.speak(utter);
+            utter.lang = 'en-US';
+            window.speechSynthesis.speak(utter);
         }
 
+        let recognition;
         async function handleMic() {
             const btn = document.getElementById('recBtn');
+            const msg = document.getElementById('msg');
             const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if(!Speech) return alert("Hata!");
-            
-            const rec = new Speech(); rec.lang = 'en-US';
-            rec.onstart = () => { btn.classList.add('active'); btn.innerText = "Seni Dinliyorum..."; };
-            rec.onresult = (e) => {
+
+            if (!Speech) {
+                msg.innerText = "Error: Browser not supported.";
+                return;
+            }
+
+            // Önce mikrofonu uyandır (Zorunlu)
+            try {
+                await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch (e) {
+                msg.innerText = "Error: Mic permission denied.";
+                return;
+            }
+
+            if (recognition) recognition.stop();
+            recognition = new Speech();
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                btn.classList.add('active');
+                btn.innerText = "Listening...";
+                msg.innerText = "Speak now!";
+            };
+
+            recognition.onresult = (e) => {
                 const res = e.results[0][0].transcript.toLowerCase();
-                if(wInfo) wInfo.tries++;
-                if(res.includes(target.toLowerCase())) {
-                    document.getElementById('msg').innerHTML = "<span style='color:#00ff88'>✓ HARİKA TELAFFUZ!</span>";
-                    if(wInfo) wInfo.hits++;
+                if(wInfo) { wInfo.tries = (wInfo.tries || 0) + 1; }
+
+                if (res.includes(target.toLowerCase())) {
+                    msg.innerHTML = "<span style='color:#00ff88'>✓ SUCCESS!</span>";
+                    if(wInfo) { wInfo.hits = (wInfo.hits || 0) + 1; }
                     confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
                 } else {
-                    document.getElementById('msg').innerHTML = `<span style='color:#ff4d4d'>Duyulan: "${res}"</span>`;
+                    msg.innerHTML = `<span style='color:#ff4d4d'>Duyulan: "${res}"</span>`;
                 }
                 localStorage.setItem('subjectWords', JSON.stringify(words));
             };
-            rec.onend = () => { btn.classList.remove('active'); btn.innerText = "🎤 Taklit Et (Kayıt)"; };
-            rec.start();
+
+            recognition.onerror = (err) => {
+                msg.innerText = "Error: " + err.error;
+            };
+
+            recognition.onend = () => {
+                btn.classList.remove('active');
+                btn.innerText = "🎤 Speak to Practice";
+            };
+
+            recognition.start();
         }
     </script>
 </body>
