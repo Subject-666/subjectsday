@@ -9,8 +9,10 @@
             --bg: #05070a;
             --card-bg: rgba(255, 255, 255, 0.05);
             --accent: #ffffff;
+            --success: #00ff9d;
+            --warning: #ffcc00;
+            --danger: #ff4d6a;
         }
-
         body {
             margin: 0;
             background: var(--bg);
@@ -19,8 +21,7 @@
             display: flex;
             min-height: 100vh;
         }
-
-        /* Sidebar / Menü */
+        /* Sidebar */
         .sidebar {
             width: 280px;
             background: rgba(255, 255, 255, 0.02);
@@ -30,14 +31,12 @@
             display: flex;
             flex-direction: column;
         }
-
         .sidebar h2 {
             font-size: 1.2rem;
             margin-bottom: 40px;
             opacity: 0.8;
             letter-spacing: 1px;
         }
-
         .nav-item {
             padding: 15px;
             margin-bottom: 10px;
@@ -46,27 +45,22 @@
             transition: 0.3s;
             color: rgba(255,255,255,0.6);
         }
-
         .nav-item:hover, .nav-item.active {
             background: rgba(255,255,255,0.1);
             color: white;
         }
-
-        /* Ana İçerik */
+        /* Main */
         .main-content {
             flex: 1;
             padding: 50px;
             overflow-y: auto;
         }
-
         .header-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 40px;
         }
-
-        /* Kartlar ve Form */
         .admin-card {
             background: var(--card-bg);
             border-radius: 24px;
@@ -74,13 +68,11 @@
             border: 1px solid rgba(255,255,255,0.1);
             margin-bottom: 30px;
         }
-
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 20px;
         }
-
         input, select {
             width: 100%;
             padding: 12px 18px;
@@ -91,7 +83,6 @@
             background: rgba(0,0,0,0.3);
             color: white;
         }
-
         button.add-btn {
             background: #fff;
             color: #000;
@@ -102,42 +93,57 @@
             cursor: pointer;
             transition: 0.3s;
         }
-
         button.add-btn:hover { transform: scale(1.05); }
-
-        /* Kelime Listesi Tablosu */
+        /* Table */
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
         }
-
-        th { text-align: left; padding: 15px; opacity: 0.5; font-weight: 400; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-
+        th {
+            text-align: left;
+            padding: 15px;
+            opacity: 0.6;
+            font-weight: 400;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
         .stat-badge {
-            background: rgba(255,255,255,0.1);
-            padding: 4px 10px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .badge-success { background: rgba(0,255,157,0.15); color: var(--success); }
+        .badge-warning { background: rgba(255,204,0,0.15); color: var(--warning); }
+        .badge-danger  { background: rgba(255,77,106,0.15); color: var(--danger); }
+        .delete-btn {
+            background: none;
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            padding: 6px 12px;
             border-radius: 6px;
-            font-size: 12px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-
     <div class="sidebar">
         <h2>SUBJECTS DAY</h2>
-        <div class="nav-item active">Kelimeleri Yönet</div>
-        <div class="nav-item">İstatistikler</div>
+        <div class="nav-item">Kelimeleri Yönet</div>
+        <div class="nav-item active">İstatistikler</div>
         <div class="nav-item" onclick="location.href='index.html'">Siteye Dön</div>
     </div>
-
     <div class="main-content">
         <div class="header-row">
-            <h1>Admin Paneli</h1>
+            <h1>Admin Paneli - İstatistikler</h1>
             <div id="status">Sistem Aktif</div>
         </div>
 
+        <!-- Kelime Ekleme (korundu, ama gerçek backend yoksa simülasyon) -->
         <div class="admin-card">
             <h3>Yeni Kelime / Veri Ekle</h3>
             <div class="grid">
@@ -154,71 +160,106 @@
                     <input type="text" id="imgUrl" placeholder="https://...">
                 </div>
                 <div>
-                    <label>Ses Dosyası URL</label>
+                    <label>Ses Dosyası URL (opsiyonel)</label>
                     <input type="text" id="audioUrl" placeholder="https://...">
                 </div>
             </div>
             <button class="add-btn" onclick="addNewWord()">Sisteme Kaydet</button>
         </div>
 
+        <!-- Gerçek İstatistik Tablosu -->
         <div class="admin-card">
-            <h3>Mevcut Kelimeler ve Başarı Oranları</h3>
-            <table id="wordTable">
+            <h3>Konuşma Pratiği İstatistikleri</h3>
+            <p style="opacity:0.7; margin-bottom:20px;">Tüm denemeler (son denemeden en eskiye doğru sıralı)</p>
+            <table id="statsTable">
                 <thead>
                     <tr>
                         <th>Kelime</th>
-                        <th>Görsel</th>
-                        <th>Ses</th>
-                        <th>Doğru Telaffuz</th>
-                        <th>İşlem</th>
+                        <th>Deneme Sayısı</th>
+                        <th>Başarılı</th>
+                        <th>Başarı Oranı</th>
+                        <th>Son Deneme</th>
                     </tr>
                 </thead>
-                <tbody id="wordList">
-                    </tbody>
+                <tbody id="statsBody"></tbody>
             </table>
         </div>
     </div>
 
     <script>
-        // Örnek başlangıç verisi (Gerçekte bunu veritabanınızdan çekeceksiniz)
-        let words = [
-            {id: 1, name: "Empati", scrambled: "itapme", audio: "var", img: "var", stats: 45},
-            {id: 2, name: "Melankoli", scrambled: "iloknalem", audio: "var", img: "var", stats: 12}
-        ];
+        // localStorage'dan istatistikleri çek (word.html'den kaydedilen)
+        function loadAndRenderStats() {
+            const statsData = JSON.parse(localStorage.getItem('allSpeakingStats') || '[]');
+            const tbody = document.getElementById('statsBody');
+            tbody.innerHTML = '';
 
-        function renderWords() {
-            const list = document.getElementById('wordList');
-            list.innerHTML = "";
-            words.forEach(w => {
-                list.innerHTML += `
-                    <tr>
-                        <td><strong>${w.name}</strong><br><small style="opacity:0.5">${w.scrambled}</small></td>
-                        <td>${w.img ? '✅' : '❌'}</td>
-                        <td>${w.audio ? '✅' : '❌'}</td>
-                        <td><span class="stat-badge">${w.stats} Kez</span></td>
-                        <td><button style="background:none; border:1px solid red; color:red; cursor:pointer; border-radius:5px;" onclick="deleteWord(${w.id})">Sil</button></td>
-                    </tr>
+            if (statsData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; opacity:0.6;">Henüz konuşma pratiği verisi yok. Kelimeleri pratik yapmaya başla!</td></tr>';
+                return;
+            }
+
+            // En yeniden eskiye sırala
+            statsData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            statsData.forEach(stat => {
+                const accuracyNum = stat.tries > 0 ? (stat.hits / stat.tries) * 100 : 0;
+                let badgeClass = 'badge-danger';
+                let badgeText = accuracyNum.toFixed(1) + '%';
+
+                if (accuracyNum >= 80) badgeClass = 'badge-success';
+                else if (accuracyNum >= 50) badgeClass = 'badge-warning';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${stat.word}</strong></td>
+                    <td>${stat.tries}</td>
+                    <td>${stat.hits}</td>
+                    <td><span class="stat-badge ${badgeClass}">${badgeText}</span></td>
+                    <td>${new Date(stat.timestamp).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' })}</td>
                 `;
+                tbody.appendChild(row);
             });
         }
 
-        async function addNewWord() {
-            // Burada API'nize (Vercel Serverless Functions vb.) istek atacaksınız
-            const name = document.getElementById('wordName').value;
-            if(!name) return alert("Kelime giriniz!");
-            
-            alert(name + " başarıyla eklendi (Simülasyon)");
-            // words.push(...) ve renderWords() işlemleri buraya gelir
-        }
+        // Kelime ekleme (simülasyon - gerçekte backend'e POST at)
+        function addNewWord() {
+            const name = document.getElementById('wordName').value.trim();
+            const scrambled = document.getElementById('scrambledWord').value.trim();
+            const img = document.getElementById('imgUrl').value.trim();
+            const audio = document.getElementById('audioUrl').value.trim();
 
-        function deleteWord(id) {
-            if(confirm("Bu kelimeyi silmek istediğinize emin misiniz?")) {
-                words = words.filter(w => w.id !== id);
-                renderWords();
+            if (!name) {
+                alert("En azından doğru kelimeyi giriniz!");
+                return;
             }
+
+            // Mevcut kelimeleri çek (subjectWords)
+            let words = JSON.parse(localStorage.getItem('subjectWords') || '[]');
+
+            // Yeni kelime objesi
+            const newWord = {
+                name: name,
+                scrambled: scrambled || '',
+                img: img || '',
+                audio: audio || '',
+                tries: 0,
+                hits: 0
+            };
+
+            words.push(newWord);
+            localStorage.setItem('subjectWords', JSON.stringify(words));
+
+            alert(`"${name}" başarıyla eklendi! (localStorage'a kaydedildi)`);
+
+            // Formu temizle
+            document.getElementById('wordName').value = '';
+            document.getElementById('scrambledWord').value = '';
+            document.getElementById('imgUrl').value = '';
+            document.getElementById('audioUrl').value = '';
         }
 
-        renderWords();
+        // Sayfa yüklendiğinde istatistikleri göster
+        window.onload = loadAndRenderStats;
     </script>
 </body>
 </html>
