@@ -2,202 +2,110 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | Subjects_666</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --bg: #05070a; --panel: #0d1117; --accent: #00ff88; --border: rgba(255,255,255,0.1); }
-        * { box-sizing: border-box; font-family: sans-serif; }
-        body { margin: 0; background: var(--bg); color: white; display: flex; min-height: 100vh; }
-        
-        aside { width: 260px; background: var(--panel); border-right: 1px solid var(--border); padding: 30px 20px; }
+        :root { --bg: #0b0f1a; --panel: #161b22; --accent: #00ff88; --border: rgba(255,255,255,0.1); }
+        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; display: flex; }
+        aside { width: 250px; background: #0d1117; height: 100vh; padding: 30px; border-right: 1px solid var(--border); }
         main { flex: 1; padding: 40px; overflow-y: auto; }
-
-        .card { background: var(--panel); border-radius: 20px; border: 1px solid var(--border); padding: 25px; margin-bottom: 25px; }
-        
-        table { width: 100%; border-collapse: collapse; }
+        .card { background: var(--panel); border-radius: 20px; padding: 25px; border: 1px solid var(--border); margin-bottom: 25px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th { text-align: left; opacity: 0.5; padding: 15px; border-bottom: 1px solid var(--border); }
-        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.02); }
-
-        .btn-icon { background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem; opacity: 0.6; transition: 0.3s; }
-        .btn-icon:hover { opacity: 1; color: var(--accent); }
-
-        /* Detay Paneli (Modal) */
-        #detail-modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 100;
-            align-items: center; justify-content: center;
-        }
-        .modal-content { background: var(--panel); padding: 40px; border-radius: 30px; width: 90%; max-width: 600px; position: relative; max-height: 90vh; overflow-y: auto; }
-        .close-modal { position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 1.5rem; }
-
-        input { background: #161b22; border: 1px solid var(--border); padding: 12px; border-radius: 10px; color: white; width: 100%; margin-bottom: 10px; }
-        .btn-save { background: var(--accent); color: black; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
-        
-        .test-zone { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
-        .btn-test { background: #fff; color: #000; border: none; padding: 10px; border-radius: 8px; font-weight: bold; flex: 1; cursor: pointer; }
-        .btn-mic-test { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid var(--border); padding: 10px; border-radius: 8px; flex: 1; cursor: pointer; }
-        .btn-mic-test.active { background: #ff4d4d; border: none; }
+        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .btn-detail { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 1.5rem; transition: 0.3s; }
+        .btn-detail:hover { transform: translateX(5px); }
+        /* Modal */
+        #modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:100; align-items:center; justify-content:center; }
+        .modal-content { background: var(--panel); padding: 40px; border-radius: 30px; width: 500px; border: 1px solid var(--accent); }
+        input { background: #0b0f1a; border: 1px solid var(--border); padding: 12px; border-radius: 10px; color: white; width: 100%; margin: 10px 0; }
+        .btn-save { background: var(--accent); color: black; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; }
     </style>
 </head>
 <body>
-
     <aside>
         <h2 style="color:var(--accent)">SUBJECTS_666</h2>
-        <p style="opacity:0.5">Yönetim Paneli</p>
+        <p>TÜBİTAK Proje Paneli</p>
     </aside>
-
     <main>
         <div class="card">
-            <h3>Yeni Kelime Ekle</h3>
+            <h3>Yeni Duygu/Kelime Ekle</h3>
             <div style="display:flex; gap:10px;">
-                <input type="text" id="new-word" placeholder="Kelime (Örn: Apple)">
-                <input type="text" id="new-img" placeholder="Görsel URL">
-                <button class="btn-save" style="margin:0; width:auto" onclick="addWord()">Ekle</button>
+                <input type="text" id="in-name" placeholder="Kelime (Örn: Happiness)">
+                <input type="text" id="in-img" placeholder="Görsel URL">
+                <button class="btn-save" style="width:auto; padding:0 30px;" onclick="addWord()">Ekle</button>
             </div>
         </div>
-
         <div class="card">
             <table>
-                <thead>
-                    <tr>
-                        <th>Kelime</th>
-                        <th>İstatistik</th>
-                        <th>Detay / Test</th>
-                        <th>İşlem</th>
-                    </tr>
-                </thead>
-                <tbody id="table-body"></tbody>
+                <thead><tr><th>KELİME</th><th>İSTATİSTİK</th><th>ANALİZ</th><th>İŞLEM</th></tr></thead>
+                <tbody id="list"></tbody>
             </table>
         </div>
     </main>
 
-    <div id="detail-modal">
+    <div id="modal">
         <div class="modal-content">
-            <span class="close-modal" onclick="closeModal()">×</span>
-            <h2 id="modal-title">Kelime Analizi</h2>
-            
-            <canvas id="myChart" style="margin: 20px 0; max-height: 200px;"></canvas>
-            
-            <div id="edit-area">
-                <label>Kelime:</label>
-                <input type="text" id="edit-name">
-                <label>Görsel URL:</label>
-                <input type="text" id="edit-img">
-                <button class="btn-save" onclick="saveEdit()">Değişiklikleri Kaydet</button>
-            </div>
-
-            <div class="test-zone">
-                <button class="btn-test" onclick="playTestAudio()">🔊 Sesi Dinle</button>
-                <button id="micTestBtn" class="btn-mic-test" onclick="startMicTest()">🎤 Kayıt Testi</button>
-            </div>
-            <div id="test-result" style="margin-top:10px; text-align:center; font-weight:bold; font-size:14px"></div>
+            <h2 id="m-title">Analiz</h2>
+            <canvas id="m-chart" style="max-height: 200px; margin-bottom: 20px;"></canvas>
+            <input type="text" id="m-name" placeholder="Kelimeyi Düzenle">
+            <input type="text" id="m-img" placeholder="Görsel URL Düzenle">
+            <button class="btn-save" onclick="saveEdit()">Değişiklikleri Kaydet</button>
+            <button onclick="document.getElementById('modal').style.display='none'" style="background:none; border:none; color:white; margin-top:15px; cursor:pointer; width:100%">Kapat</button>
         </div>
     </div>
 
     <script>
-        let words = JSON.parse(localStorage.getItem('subjectWords')) || [];
-        let currentEditId = null;
-        let chartInstance = null;
+        // Örnek Verilerle Başlat (Kırık görüntü olmaması için)
+        let data = JSON.parse(localStorage.getItem('subjectWords')) || [
+            { id: 1, name: 'Happiness', img: 'https://images.unsplash.com/photo-1527631746610-bca00a040d60?w=500', hits: 12, tries: 15 },
+            { id: 2, name: 'Surprise', img: 'https://images.unsplash.com/photo-1530268582393-51475937155d?w=500', hits: 5, tries: 10 }
+        ];
 
-        function renderTable() {
-            const body = document.getElementById('table-body');
-            body.innerHTML = '';
-            words.forEach(w => {
-                body.innerHTML += `
-                    <tr>
-                        <td><strong>${w.name}</strong></td>
-                        <td>${w.hits || 0} Başarı / %${w.score || 0}</td>
-                        <td><button class="btn-icon" onclick="openModal(${w.id})">➔</button></td>
-                        <td><button style="color:#ff4d4d; background:none; border:none; cursor:pointer" onclick="deleteWord(${w.id})">Sil</button></td>
-                    </tr>
-                `;
+        function render() {
+            const list = document.getElementById('list');
+            list.innerHTML = '';
+            data.forEach(w => {
+                let perc = w.tries > 0 ? Math.round((w.hits/w.tries)*100) : 0;
+                list.innerHTML += `<tr>
+                    <td><strong>${w.name}</strong></td>
+                    <td>${w.hits} Başarı / %${perc} Skor</td>
+                    <td><button class="btn-detail" onclick="openModal(${w.id})">➔</button></td>
+                    <td><button onclick="del(${w.id})" style="color:#ff4d4d; background:none; border:none; cursor:pointer">Sil</button></td>
+                </tr>`;
             });
-            localStorage.setItem('subjectWords', JSON.stringify(words));
+            localStorage.setItem('subjectWords', JSON.stringify(data));
         }
 
         function addWord() {
-            const name = document.getElementById('new-word').value;
-            const img = document.getElementById('new-img').value;
-            if(!name) return;
-            words.push({ id: Date.now(), name, img: img || 'https://picsum.photos/400/250', hits: 0, score: 0, tries: 0 });
-            renderTable();
-            document.getElementById('new-word').value = '';
-            document.getElementById('new-img').value = '';
+            const n = document.getElementById('in-name').value;
+            const i = document.getElementById('in-img').value;
+            if(!n) return;
+            data.push({ id: Date.now(), name: n, img: i || 'https://via.placeholder.com/500x300?text=Gorsel+Yok', hits: 0, tries: 0 });
+            render();
         }
 
+        let curId = null; let chart = null;
         function openModal(id) {
-            currentEditId = id;
-            const word = words.find(w => w.id === id);
-            document.getElementById('modal-title').innerText = word.name + " Analizi";
-            document.getElementById('edit-name').value = word.name;
-            document.getElementById('edit-img').value = word.img;
-            document.getElementById('test-result').innerText = '';
-            document.getElementById('detail-modal').style.display = 'flex';
-            
-            const ctx = document.getElementById('myChart').getContext('2d');
-            if(chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Başarılı', 'Hatalı'],
-                    datasets: [{
-                        data: [word.hits, (word.tries || 0) - (word.hits || 0)],
-                        backgroundColor: ['#00ff88', '#ff4d4d'],
-                        borderWidth: 0
-                    }]
-                },
-                options: { responsive: true, cutout: '70%' }
-            });
-        }
-
-        function playTestAudio() {
-            const name = document.getElementById('edit-name').value;
-            const utter = new SpeechSynthesisUtterance(name);
-            utter.lang = 'en-US';
-            window.speechSynthesis.speak(utter);
-        }
-
-        function startMicTest() {
-            const btn = document.getElementById('micTestBtn');
-            const res = document.getElementById('test-result');
-            const target = document.getElementById('edit-name').value.toLowerCase();
-            const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-            if(!Speech) return alert("Tarayıcı desteklenmiyor.");
-            const rec = new Speech();
-            rec.lang = 'en-US';
-
-            rec.onstart = () => { btn.classList.add('active'); btn.innerText = "Dinleniyor..."; res.innerText = ""; };
-            rec.onresult = (e) => {
-                const result = e.results[0][0].transcript.toLowerCase();
-                if(result.includes(target)) {
-                    res.innerHTML = '<span style="color:#00ff88">✓ Sistem kelimeyi tanıdı!</span>';
-                } else {
-                    res.innerHTML = `<span style="color:#ff4d4d">Tanınan: "${result}"</span>`;
-                }
-            };
-            rec.onend = () => { btn.classList.remove('active'); btn.innerText = "🎤 Kayıt Testi"; };
-            rec.start();
+            curId = id; const w = data.find(x => x.id === id);
+            document.getElementById('m-title').innerText = w.name + " Verileri";
+            document.getElementById('m-name').value = w.name;
+            document.getElementById('m-img').value = w.img;
+            document.getElementById('modal').style.display = 'flex';
+            const ctx = document.getElementById('m-chart').getContext('2d');
+            if(chart) chart.destroy();
+            chart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Başarı', 'Hata'], datasets: [{ data: [w.hits, w.tries - w.hits], backgroundColor: ['#00ff88', '#ff4d4d'] }] } });
         }
 
         function saveEdit() {
-            const word = words.find(w => w.id === currentEditId);
-            word.name = document.getElementById('edit-name').value;
-            word.img = document.getElementById('edit-img').value;
-            renderTable();
-            closeModal();
+            const w = data.find(x => x.id === curId);
+            w.name = document.getElementById('m-name').value;
+            w.img = document.getElementById('m-img').value;
+            render(); document.getElementById('modal').style.display = 'none';
         }
 
-        function deleteWord(id) {
-            if(confirm("Silmek istediğinize emin misiniz Efendim?")) {
-                words = words.filter(w => w.id !== id);
-                renderTable();
-            }
-        }
-
-        function closeModal() { document.getElementById('detail-modal').style.display = 'none'; }
-        renderTable();
+        function del(id) { data = data.filter(x => x.id !== id); render(); }
+        render();
     </script>
 </body>
 </html>
