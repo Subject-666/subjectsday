@@ -12,13 +12,6 @@
             overflow: hidden; color: white;
         }
 
-        .glow {
-            position: fixed; width: 800px; height: 800px;
-            background: radial-gradient(circle, rgba(255,255,255,.06), transparent 65%);
-            pointer-events: none; left: 50%; top: 50%;
-            transform: translate(-50%, -50%); z-index: 0;
-        }
-
         .container {
             height: 100%; display: flex; align-items: center;
             justify-content: center; z-index: 1; position: relative;
@@ -33,50 +26,74 @@
             border: 1px solid rgba(255,255,255,0.1);
         }
 
-        /* 1. GÖRSEL AREA */
         #word-image {
-            width: 100%; height: 280px; object-fit: cover;
-            border-radius: 25px; margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            width: 100%; height: 260px; object-fit: cover;
+            border-radius: 25px; margin-bottom: 25px;
             background: #000;
         }
 
-        .action-zone { display: flex; flex-direction: column; gap: 15px; }
+        /* WHATSAPP TARZI SES DALGASI */
+        .wave-container {
+            display: none; /* Sadece kayıt sırasında görünür */
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            height: 30px;
+            margin: 20px 0;
+        }
 
-        /* 2. SES (DİNLE) VE 3. KAYIT (KONUŞ) BUTONLARI */
+        .wave-bar {
+            width: 3px;
+            height: 10px;
+            background: #fff;
+            border-radius: 3px;
+            animation: wave 0.5s ease-in-out infinite alternate;
+        }
+
+        /* Farklı bar boyları ve gecikmelerle gerçekçi dalga */
+        .wave-bar:nth-child(2) { animation-delay: 0.1s; height: 15px; }
+        .wave-bar:nth-child(3) { animation-delay: 0.2s; height: 25px; }
+        .wave-bar:nth-child(4) { animation-delay: 0.15s; height: 18px; }
+        .wave-bar:nth-child(5) { animation-delay: 0.3s; height: 12px; }
+
+        @keyframes wave {
+            from { transform: scaleY(1); opacity: 0.5; }
+            to { transform: scaleY(1.8); opacity: 1; }
+        }
+
+        .action-zone { display: flex; flex-direction: column; gap: 12px; }
+
         button {
-            padding: 18px; border-radius: 20px; border: none;
-            font-weight: 700; cursor: pointer; transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-            font-size: 16px; width: 100%;
+            padding: 16px; border-radius: 18px; border: none;
+            font-weight: 700; cursor: pointer; transition: 0.3s;
+            font-size: 15px; width: 100%;
         }
 
         .btn-audio { background: white; color: black; }
         .btn-record { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
-        
-        .btn-record.active { 
-            background: #ff3b30; border-color: #ff3b30; 
-            animation: pulse 1.5s infinite; 
-        }
+        .btn-record.recording { background: #ff3b30; border: none; }
 
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-
-        #msg { margin-top: 20px; font-size: 14px; min-height: 20px; font-weight: 500; }
-        .success { color: #00ff88; }
-        .error { color: #ff4d4d; }
+        #msg { margin-top: 15px; font-size: 14px; min-height: 20px; }
+        .success { color: #00ff88; font-weight: bold; }
     </style>
 </head>
 <body>
-
-    <div class="glow"></div>
 
     <div class="container">
         <div class="card">
             <img id="word-image" src="" alt="Duygu">
             
+            <div id="wave" class="wave-container">
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+            </div>
+
             <div class="action-zone">
                 <button class="btn-audio" onclick="playAudio()">Sesi Dinle</button>
-                
-                <button id="recBtn" class="btn-record" onclick="startRecording()">Sesi Taklit Et (Kayıt)</button>
+                <button id="recBtn" class="btn-record" onclick="toggleRecording()">Sesi Taklit Et (Kayıt)</button>
             </div>
 
             <div id="msg"></div>
@@ -87,8 +104,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const keyword = urlParams.get('key')?.toLowerCase();
         const localData = JSON.parse(localStorage.getItem('subjectWords')) || [];
-
-        // Admin panelindeki veriyi bul (Scrambled veya Normal)
+        
         const wordInfo = localData.find(w => 
             w.name.toLowerCase() === keyword || 
             w.scrambled.toLowerCase() === keyword
@@ -97,51 +113,65 @@
         if (wordInfo) {
             document.getElementById('word-image').src = wordInfo.img;
             window.targetWord = wordInfo.name;
-        } else {
-            alert("Kelime veritabanında yok!");
-            location.href = "index.html";
         }
 
-        // SES DİNLEME FONKSİYONU
         function playAudio() {
             const utter = new SpeechSynthesisUtterance(window.targetWord);
-            utter.lang = 'en-US'; 
+            utter.lang = 'en-US';
             window.speechSynthesis.speak(utter);
         }
 
-        // KAYIT VE TELAFFUZ KONTROLÜ
-        function startRecording() {
+        // SES TANIMA VE İZİN KONTROLÜ
+        let recognition;
+        function toggleRecording() {
             const btn = document.getElementById('recBtn');
+            const wave = document.getElementById('wave');
             const msg = document.getElementById('msg');
-            const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-            if (!Recognition) return alert("Tarayıcı desteklenmiyor.");
+            if (!Speech) return alert("Tarayıcınız ses tanımayı desteklemiyor.");
 
-            const rec = new Recognition();
-            rec.lang = 'en-US';
+            if (!recognition) {
+                recognition = new Speech();
+                recognition.lang = 'en-US';
+                recognition.continuous = false;
 
-            rec.onstart = () => {
-                btn.classList.add('active');
-                btn.innerText = "Dinleniyor...";
-                msg.innerText = "";
-            };
+                recognition.onstart = () => {
+                    btn.classList.add('recording');
+                    btn.innerText = "Seni Dinliyorum...";
+                    wave.style.display = "flex";
+                    msg.innerText = "";
+                };
 
-            rec.onresult = (e) => {
-                const result = e.results[0][0].transcript.toLowerCase();
-                if (result.includes(window.targetWord.toLowerCase())) {
-                    msg.innerHTML = '<span class="success">✓ Doğru Telaffuz!</span>';
-                    // Admin paneline başarıyı işleme kodu buraya gelebilir
-                } else {
-                    msg.innerHTML = `<span class="error">× Yanlış (Duyulan: ${result})</span>`;
-                }
-            };
+                recognition.onresult = (e) => {
+                    const result = e.results[0][0].transcript.toLowerCase();
+                    if (result.includes(window.targetWord.toLowerCase())) {
+                        msg.innerHTML = '<span class="success">✓ Harika! Başarıyla Taklit Edildi.</span>';
+                        updateStats();
+                    } else {
+                        msg.innerHTML = `<span style="color: #aaa;">Duyulan: "${result}" - Tekrar Dene.</span>`;
+                    }
+                };
 
-            rec.onend = () => {
-                btn.classList.remove('active');
-                btn.innerText = "Sesi Taklit Et (Kayıt)";
-            };
+                recognition.onend = () => {
+                    btn.classList.remove('recording');
+                    btn.innerText = "Sesi Taklit Et (Kayıt)";
+                    wave.style.display = "none";
+                };
+            }
 
-            rec.start();
+            recognition.start();
+        }
+
+        // BAŞARIYI ADMIN PANELINE KAYDETME
+        function updateStats() {
+            let data = JSON.parse(localStorage.getItem('subjectWords')) || [];
+            const index = data.findIndex(w => w.name === window.targetWord);
+            if (index !== -1) {
+                data[index].hits += 1; // Tahmin sayısını artır
+                data[index].score = Math.min(100, data[index].score + 5); // Puanı artır
+                localStorage.setItem('subjectWords', JSON.stringify(data));
+            }
         }
     </script>
 </body>
