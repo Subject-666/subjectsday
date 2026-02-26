@@ -4,9 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Practice | Speaking</title>
-
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-
   <style>
     :root {
       --bg: #0b1120;
@@ -16,9 +14,7 @@
       --text: #e0f7ff;
       --text-muted: #94a3b8;
     }
-
     * { margin:0; padding:0; box-sizing:border-box; }
-
     body {
       height: 100dvh;
       background: var(--bg);
@@ -28,7 +24,6 @@
       place-items: center;
       overflow: hidden;
     }
-
     .card {
       background: var(--card);
       backdrop-filter: blur(24px);
@@ -40,7 +35,6 @@
       box-shadow: 0 30px 70px -20px rgba(0,0,0,0.6);
       text-align: center;
     }
-
     #word-image {
       width: 100%;
       height: 220px;
@@ -50,7 +44,6 @@
       margin-bottom: 1.8rem;
       box-shadow: 0 8px 30px rgba(0,0,0,0.4);
     }
-
     h1 {
       font-size: 2.5rem;
       font-weight: 700;
@@ -59,7 +52,6 @@
       margin-bottom: 2rem;
       text-transform: capitalize;
     }
-
     button {
       width: 100%;
       padding: 1.1rem;
@@ -72,36 +64,30 @@
       transition: all 0.22s ease;
       user-select: none;
     }
-
     .btn-listen {
       background: white;
       color: #0f172a;
     }
     .btn-listen:hover { background: #f1f5f9; transform: translateY(-1px); }
-
     .btn-speak {
       background: rgba(0, 255, 157, 0.12);
       color: var(--accent);
       border: 1.5px solid var(--accent);
     }
-
     .btn-speak:hover:not(:disabled) {
       background: rgba(0, 255, 157, 0.22);
       transform: translateY(-1px);
     }
-
     .btn-speak.active {
       background: var(--danger);
       color: white;
       border-color: var(--danger);
       animation: pulse 1.8s infinite ease-in-out;
     }
-
     @keyframes pulse {
       0%,100% { transform: scale(1); }
-      50%     { transform: scale(1.04); }
+      50% { transform: scale(1.04); }
     }
-
     #msg {
       min-height: 2.4rem;
       margin-top: 1.2rem;
@@ -109,33 +95,31 @@
       font-weight: 500;
       line-height: 1.45;
     }
-
     .success { color: var(--accent); }
-    .error   { color: var(--danger); }
+    .error { color: var(--danger); }
   </style>
 </head>
 <body>
-
 <div class="card">
   <img id="word-image" src="" alt="Word visual" crossorigin="anonymous">
   <h1 id="target-text">...</h1>
-
   <button class="btn-listen" type="button" onclick="playWord()">🔊 Listen</button>
-  <button id="speakBtn" class="btn-speak" type="button">🎤 Speak to Practice</button>
-
+  <button id="speakBtn" class="btn-speak" type="button">🎤 Start Speaking</button>
   <div id="msg"></div>
 </div>
-
 <script>
-const msgEl     = document.getElementById('msg');
-const speakBtn  = document.getElementById('speakBtn');
-const targetEl  = document.getElementById('target-text');
-const imageEl   = document.getElementById('word-image');
-
-let recognition = null;
-let targetWord  = "test";
-let wordList    = [];
+const msgEl = document.getElementById('msg');
+const speakBtn = document.getElementById('speakBtn');
+const targetEl = document.getElementById('target-text');
+const imageEl = document.getElementById('word-image');
+const API_KEY = 'AIzaSyBieeiaZK_uiMBxZEBjPmq0tmF6PYg_j9g';
+let targetWord = "test";
+let wordList = [];
 let currentItem = null;
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+let audioStream = null;
 
 // ────────────────────────────────────────────────
 function showMessage(text, className = '') {
@@ -154,48 +138,84 @@ function playWord() {
 }
 
 // ────────────────────────────────────────────────
-async function startRecognition() {
-  const SpeechApi = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechApi) {
-    showMessage("This browser does not support speech recognition.", 'error');
-    return;
-  }
+async function toggleRecording() {
+  if (isRecording) {
+    // Stop recording
+    mediaRecorder.stop();
+    speakBtn.classList.remove('active');
+    speakBtn.textContent = '🎤 Start Speaking';
+    showMessage('Processing your speech...');
+    isRecording = false;
+  } else {
+    // Start recording
+    try {
+      audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(audioStream, { mimeType: 'audio/webm' });
+      audioChunks = [];
 
-  // Mikrofon iznini açıkça talep et (özellikle Opera GX / mobil için önemli)
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = async () => {
+          const base64Audio = reader.result.split(',')[1]; // Remove data:audio/webm;base64,
+          await analyzeAudioWithGemini(base64Audio);
+        };
+        // Stop all tracks to release microphone
+        audioStream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      speakBtn.classList.add('active');
+      speakBtn.textContent = '🛑 Stop Speaking';
+      showMessage('Speak now!');
+      isRecording = true;
+    } catch (err) {
+      showMessage('Microphone access denied or unavailable.', 'error');
+    }
+  }
+}
+
+// ────────────────────────────────────────────────
+async function analyzeAudioWithGemini(base64Audio) {
   try {
-    await navigator.mediaDevices.getUserMedia({ audio: true });
-  } catch (err) {
-    showMessage("Microphone access denied or unavailable.", 'error');
-    return;
-  }
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            {
+              text: `Transcribe this audio and check if the spoken word exactly matches "${targetWord.toLowerCase()}". Respond only with "yes" or "no" in lowercase. If it matches, "yes"; otherwise, "no".`
+            },
+            {
+              inlineData: {
+                mimeType: 'audio/webm',
+                data: base64Audio
+              }
+            }
+          ]
+        }]
+      })
+    });
 
-  // Eski tanıma nesnesini temizle
-  if (recognition) {
-    recognition.abort();
-    recognition = null;
-  }
+    if (!response.ok) {
+      throw new Error('API request failed');
+    }
 
-  recognition = new SpeechApi();
-  recognition.lang = 'en-US';
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
-  recognition.continuous = false;
+    const data = await response.json();
+    const resultText = data.candidates[0].content.parts[0].text.trim().toLowerCase();
+    const isCorrect = resultText === 'yes';
 
-  recognition.onstart = () => {
-    speakBtn.classList.add('active');
-    speakBtn.textContent = 'Listening...';
-    showMessage('Speak now!');
-  };
-
-  recognition.onresult = (event) => {
-    const spoken = event.results[0][0].transcript.trim().toLowerCase();
+    // Get transcription if available (but since prompt is strict, we might not have it; for UX, assume Gemini might provide more, but stick to yes/no)
     currentItem.tries = (currentItem.tries || 0) + 1;
-
-    const isCorrect = spoken.includes(targetWord.toLowerCase());
-
     if (isCorrect) {
       currentItem.hits = (currentItem.hits || 0) + 1;
-      showMessage('✓ Great job!', 'success');
+      showMessage('✓ Great job! Spoken word matches.', 'success');
       confetti({
         particleCount: 120,
         spread: 80,
@@ -203,33 +223,13 @@ async function startRecognition() {
         origin: { y: 0.65 }
       });
     } else {
-      showMessage(`Heard: “${spoken}”`, 'error');
+      showMessage(`✗ Try again. Spoken word does not match "${targetWord}".`, 'error');
     }
 
-    // localStorage’a yaz
+    // Save to localStorage
     localStorage.setItem('subjectWords', JSON.stringify(wordList));
-  };
-
-  recognition.onerror = (event) => {
-    let txt = 'Speech recognition error';
-    if (event.error === 'no-speech')      txt = 'No speech detected';
-    else if (event.error === 'audio-capture') txt = 'Microphone not working';
-    else if (event.error === 'not-allowed')   txt = 'Microphone permission denied';
-    else if (event.error) txt += `: ${event.error}`;
-
-    showMessage(txt, 'error');
-  };
-
-  recognition.onend = () => {
-    speakBtn.classList.remove('active');
-    speakBtn.textContent = '🎤 Speak to Practice';
-    // otomatik tekrar başlatma yok → kullanıcı tekrar tıklamalı
-  };
-
-  try {
-    recognition.start();
   } catch (err) {
-    showMessage('Failed to start listening', 'error');
+    showMessage('Error analyzing speech: ' + err.message, 'error');
   }
 }
 
@@ -237,23 +237,19 @@ async function startRecognition() {
 function init() {
   const params = new URLSearchParams(location.search);
   const key = params.get('key')?.trim().toLowerCase();
-
   if (!key) {
     targetEl.textContent = '(no key)';
     showMessage('Missing ?key= parameter', 'error');
     return;
   }
-
   try {
     wordList = JSON.parse(localStorage.getItem('subjectWords') || '[]');
   } catch {
     wordList = [];
   }
-
   currentItem = wordList.find(
     w => w.name?.toLowerCase() === key || w.scrambled?.toLowerCase() === key
   );
-
   if (!currentItem?.name) {
     targetWord = key;
     targetEl.textContent = key;
@@ -261,20 +257,18 @@ function init() {
     showMessage('Word not found in localStorage', 'error');
     return;
   }
-
   targetWord = currentItem.name;
   targetEl.textContent = targetWord;
   imageEl.src = currentItem.img || '';
-
-  // Görsel yüklenemezse gizle/boş bırak
+  // Hide image if it fails to load
   imageEl.onerror = () => { imageEl.style.display = 'none'; };
 }
 
-// Başlat
+// Initialize
 init();
 
-// Buton olayını bağla
-speakBtn.onclick = startRecognition;
+// Bind button event
+speakBtn.onclick = toggleRecording;
 </script>
 </body>
 </html>
