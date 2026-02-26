@@ -5,127 +5,150 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Speaking Feelings</title>
     <style>
-        body, html {
+        * { box-sizing: border-box; }
+        
+        html, body {
             margin: 0;
             height: 100%;
-            background: #0b0f1a;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: #0b0f1a; /* Eski koyu lacivert/siyah tonu */
+            font-family: system-ui, -apple-system, sans-serif;
             overflow: hidden;
             color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
-        /* Parlama Efekti Düzenlemesi */
-        #glow {
+        /* Parlama Efekti - Tam merkezleme sağlandı */
+        .glow {
             position: fixed;
             width: 800px;
             height: 800px;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+            /* Eski renk: Beyazımsı soft parlama */
+            background: radial-gradient(circle, rgba(255,255,255,.08), transparent 60%);
             pointer-events: none;
-            z-index: 0;
-            /* transform burada sadece merkezleme için sabit kalmalı, 
-               hareket JS ile left/top üzerinden yapılacak */
-
+            left: 0;
+            top: 0;
+            transform: translate(-50%, -50%);
             transition: 0.1s ease-out;
-            filter: blur(40px);
+            z-index: 0;
+        }
+
+        .center {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
 
         .card {
             position: relative;
             z-index: 1;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            padding: 60px 45px;
-            border-radius: 35px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+            background: rgba(255, 255, 255, .06);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 50px;
+            border-radius: 30px;
+            box-shadow: 0 40px 120px rgba(0,0,0,.7);
             text-align: center;
-            width: 380px;
-            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 100%;
+            max-width: 420px;
+            transition: .4s cubic-bezier(.2,.8,.2,1);
         }
 
-        .card:hover {
-            transform: scale(1.02) translateY(-5px);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
+        .card:hover { transform: scale(1.03); }
 
         h1 {
-            font-size: 2rem;
+            font-size: 28px;
             margin-bottom: 30px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
+            font-weight: 600;
         }
 
         input {
             width: 100%;
             padding: 16px 20px;
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(0, 0, 0, 0.3);
+            border-radius: 999px;
+            border: none;
+            outline: none;
+            background: #111;
             color: white;
             font-size: 16px;
-            outline: none;
             margin-bottom: 20px;
-            box-sizing: border-box;
-            transition: 0.3s;
-        }
-
-        input:focus {
-            border-color: rgba(255, 255, 255, 0.4);
-            background: rgba(0, 0, 0, 0.5);
         }
 
         button {
             width: 100%;
             padding: 16px;
-            border-radius: 15px;
+            border-radius: 999px;
             border: none;
             background: white;
             color: black;
-            font-weight: 700;
+            font-weight: 600;
             font-size: 16px;
             cursor: pointer;
-            transition: 0.3s;
+            transition: .3s;
         }
 
-        button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
-        }
+        button:hover { transform: scale(1.05); }
 
         .credit {
             position: fixed;
-            bottom: 20px;
+            right: 20px;
+            bottom: 15px;
             font-size: 11px;
-            opacity: 0.3;
-            letter-spacing: 2px;
-            text-transform: uppercase;
+            opacity: .4;
+        }
+
+        /* ===== MOBİL UYUMLULUK ===== */
+        @media (max-width: 480px) {
+            .card {
+                padding: 40px 25px;
+                border-radius: 24px;
+            }
+            
+            h1 { font-size: 24px; }
+            
+            .glow {
+                width: 400px; /* Mobilde parlamayı küçültüyoruz */
+                height: 400px;
+            }
+
+            .credit {
+                left: 0;
+                right: 0;
+                text-align: center;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div id="glow"></div>
+    <div class="glow" id="glow"></div>
 
-    <div class="card">
-        <h1>Speaking Feelings</h1>
-        <input id="key" placeholder="Kelimeyi girin..." autocomplete="off">
-        <button onclick="go()">Başlat</button>
+    <div class="center">
+        <div class="card">
+            <h1>Speaking Feelings</h1>
+            <input id="key" placeholder="Enter keyword" autocomplete="off">
+            <button onclick="go()">Start</button>
+        </div>
     </div>
 
     <div class="credit">by Subject_666</div>
 
     <script>
         const glow = document.getElementById("glow");
+        
+        // Mouse ve Dokunmatik takibi
+        const moveGlow = (e) => {
+            const x = e.clientX || (e.touches && e.touches[0].clientX);
+            const y = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            if (x && y) {
+                glow.style.left = x + "px";
+                glow.style.top = y + "px";
+            }
+        };
 
-        // Farenin tam merkezde olması için düzeltilmiş takip kodu
-        document.addEventListener("mousemove", (e) => {
-            glow.style.left = e.clientX + "px";
-            glow.style.top = e.clientY + "px";
-        });
+        document.addEventListener("mousemove", moveGlow);
+        document.addEventListener("touchmove", moveGlow);
 
         async function go() {
             const k = document.getElementById("key").value.trim();
@@ -136,11 +159,15 @@
                 return;
             }
 
-            // word.html sayfasına yönlendirme (Proje mantığına göre)
+            // word.html'e yönlendiriyoruz
             location.href = "word.html?key=" + encodeURIComponent(k);
         }
+
+        // Enter tuşu desteği
+        document.getElementById("key").addEventListener("keypress", (e) => {
+            if (e.key === "Enter") go();
+        });
     </script>
 </body>
 </html>
-
 
