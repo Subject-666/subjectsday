@@ -114,15 +114,11 @@ const speakBtn = document.getElementById('speakBtn');
 const targetEl = document.getElementById('target-text');
 const imageEl = document.getElementById('word-image');
 
-const API_KEY = 'AIzaSyBieeiaZK_uiMBxZEBjPmq0tmF6PYg_j9g'; // ← Burası senin anahtarın (ücretsiz tier'da audio için kota çok düşük olabilir → 20-50 istek/gün gibi)
-
 let targetWord = "test";
 let wordList = [];
 let currentItem = null;
-let mediaRecorder = null;
-let audioChunks = [];
-let isRecording = false;
-let audioStream = null;
+let recognition = null;
+let isListening = false;
 
 // ────────────────────────────────────────────────
 function showMessage(text, className = '') {
@@ -141,107 +137,81 @@ function playWord() {
 }
 
 // ────────────────────────────────────────────────
-async function toggleRecording() {
-  if (isRecording) {
-    // Kaydı durdur
-    mediaRecorder.stop();
+function toggleRecognition() {
+  if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+    showMessage("Your browser doesn't support speech recognition. Try Chrome/Edge.", 'error');
+    return;
+  }
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (isListening) {
+    if (recognition) recognition.stop();
+    isListening = false;
     speakBtn.classList.remove('active');
     speakBtn.textContent = '🎤 Start Speaking';
-    showMessage('Processing...');
-    isRecording = false;
-  } else {
-    // Kayda başla
-    try {
-      audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(audioStream, { mimeType: 'audio/webm' });
-      audioChunks = [];
+    showMessage('Stopped.');
+    return;
+  }
 
-      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+  try {
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(() => {
+      recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;     // Sadece final sonuç
+      recognition.maxAlternatives = 1;
+      recognition.continuous = false;         // Tek seferde dur (kelime pratiği için ideal)
 
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-        const reader = new FileReader();
-        reader.readAsDataURL(audioBlob);
-        reader.onloadend = async () => {
-          const base64Audio = reader.result.split(',')[1];
-          await analyzeWithGemini(base64Audio);
-        };
-        audioStream.getTracks().forEach(track => track.stop());
+      recognition.onstart = () => {
+        speakBtn.classList.add('active');
+        speakBtn.textContent = '🛑 Listening...';
+        showMessage('Speak the word now!');
       };
 
-      mediaRecorder.start();
-      speakBtn.classList.add('active');
-      speakBtn.textContent = '🛑 Stop & Check';
-      showMessage('Speak clearly now...');
-      isRecording = true;
-    } catch (err) {
-      showMessage('Microphone access denied or error: ' + err.message, 'error');
-    }
-  }
-}
+      recognition.onresult = (event) => {
+        const spoken = event.results[0][0].transcript.trim().toLowerCase();
+        currentItem.tries = (currentItem.tries || 0) + 1;
 
-// ────────────────────────────────────────────────
-async function analyzeWithGemini(base64Audio) {
-  try {
-    const MODEL = 'gemini-2.5-flash'; // 2026'da audio için daha stabil
+        const isCorrect = spoken.includes(targetWord.toLowerCase()) || spoken === targetWord.toLowerCase();
 
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              {
-                text: `Transcribe this spoken word exactly. Check if it matches "${targetWord.toLowerCase()}" perfectly (ignore accent/noise). Reply ONLY with "yes" or "no" (lowercase, no extra text).`
-              },
-              {
-                inlineData: {
-                  mimeType: 'audio/webm',
-                  data: base64Audio
-                }
-              }
-            ]
-          }],
-          generationConfig: {
-            temperature: 0.0,
-            maxOutputTokens: 5
-          }
-        })
-      }
-    );
+        if (isCorrect) {
+          currentItem.hits = (currentItem.hits || 0) + 1;
+          showMessage(`✓ Great! Heard: "${spoken}"`, 'success');
+          confetti({
+            particleCount: 140,
+            spread: 90,
+            startVelocity: 35,
+            origin: { y: 0.6 }
+          });
+        } else {
+          showMessage(`✗ Heard: "${spoken}" – try again!`, 'error');
+        }
 
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`API error ${res.status}: ${errText}`);
-    }
+        localStorage.setItem('subjectWords', JSON.stringify(wordList));
+      };
 
-    const data = await res.json();
-    let text = (data.candidates?.[0]?.content?.parts?.[0]?.text || '').trim().toLowerCase();
+      recognition.onerror = (event) => {
+        let msg = 'Error: ';
+        if (event.error === 'no-speech') msg += 'No speech detected.';
+        else if (event.error === 'audio-capture') msg += 'Microphone issue.';
+        else if (event.error === 'not-allowed') msg += 'Permission denied.';
+        else msg += event.error;
+        showMessage(msg, 'error');
+      };
 
-    // Gemini bazen fazladan karakter ekleyebiliyor → temizle
-    text = text.includes('yes') ? 'yes' : 'no';
+      recognition.onend = () => {
+        speakBtn.classList.remove('active');
+        speakBtn.textContent = '🎤 Start Speaking';
+        isListening = false;
+      };
 
-    const isCorrect = text === 'yes';
-
-    currentItem.tries = (currentItem.tries || 0) + 1;
-    if (isCorrect) {
-      currentItem.hits = (currentItem.hits || 0) + 1;
-      showMessage('✓ Perfect match!', 'success');
-      confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 } });
-    } else {
-      showMessage(`✗ Not a match. Try again! (heard something else)`, 'error');
-    }
-
-    localStorage.setItem('subjectWords', JSON.stringify(wordList));
+      recognition.start();
+      isListening = true;
+    }).catch(err => {
+      showMessage('Microphone permission denied: ' + err.message, 'error');
+    });
   } catch (err) {
-    console.error(err);
-    let msg = 'Error: ' + err.message;
-    if (err.message.includes('429') || err.message.includes('quota')) {
-      msg += ' → Free tier quota exceeded. Enable billing or wait 24h.';
-    }
-    showMessage(msg, 'error');
+    showMessage('Failed to start: ' + err.message, 'error');
   }
 }
 
@@ -251,7 +221,7 @@ function init() {
   const key = params.get('key')?.trim().toLowerCase();
   if (!key) {
     targetEl.textContent = '(no key)';
-    showMessage('Missing ?key= in URL', 'error');
+    showMessage('Add ?key=WORD in URL', 'error');
     return;
   }
 
@@ -269,7 +239,7 @@ function init() {
     targetWord = key;
     targetEl.textContent = key;
     imageEl.src = '';
-    showMessage('Word not in storage – using key as word', 'error');
+    showMessage('Word not found in storage', 'error');
     return;
   }
 
@@ -280,7 +250,8 @@ function init() {
 }
 
 init();
-speakBtn.onclick = toggleRecording;
+speakBtn.onclick = toggleRecognition;
 </script>
 </body>
 </html>
+
