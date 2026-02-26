@@ -5,164 +5,90 @@
     <title>Admin Dashboard | Subjects_666</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --bg: #0b0f1a; --card-bg: #111827; --accent: #00ff88; --border: rgba(255,255,255,0.08); }
+        :root { --bg: #0b1120; --card: #111827; --accent: #00ff88; --border: rgba(255,255,255,0.08); }
         body { margin: 0; background: var(--bg); color: white; font-family: 'Inter', sans-serif; display: flex; height: 100vh; }
-        
-        /* Sol Menü */
         aside { width: 280px; background: #0d1117; padding: 40px 20px; border-right: 1px solid var(--border); }
-        .logo { color: var(--accent); font-size: 24px; font-weight: 900; letter-spacing: 1px; margin-bottom: 10px; }
-        
-        /* Ana İçerik */
         main { flex: 1; padding: 50px; overflow-y: auto; }
-        .section-title { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 30px; }
-        
-        /* Kart Yapısı */
-        .card { background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border); padding: 30px; margin-bottom: 30px; }
-        
-        /* Tablo Tasarımı (İlk Tasarımınız) */
+        .card { background: var(--card); border-radius: 16px; border: 1px solid var(--border); padding: 30px; margin-bottom: 30px; }
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; font-size: 12px; text-transform: uppercase; opacity: 0.4; padding: 15px; border-bottom: 1px solid var(--border); }
+        th { text-align: left; font-size: 12px; opacity: 0.4; padding: 15px; border-bottom: 1px solid var(--border); text-transform: uppercase; }
         td { padding: 20px 15px; border-bottom: 1px solid rgba(255,255,255,0.03); }
-        
         .word-main { font-weight: 700; font-size: 18px; display: block; }
         .word-sub { font-size: 12px; opacity: 0.4; margin-top: 4px; }
-        
         .status-badge { background: rgba(0, 255, 136, 0.1); color: var(--accent); padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; }
-        
-        /* Butonlar */
         .btn-arrow { background: none; border: none; color: white; font-size: 20px; cursor: pointer; transition: 0.3s; opacity: 0.5; }
         .btn-arrow:hover { opacity: 1; color: var(--accent); transform: translateX(5px); }
-        .btn-del { color: #ff4d4d; background: none; border: none; cursor: pointer; font-weight: 600; }
-
-        /* Modal (Analiz Paneli) */
-        #modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index:1000; align-items:center; justify-content:center; }
+        input { background: #0b0f1a; border: 1px solid var(--border); padding: 14px; border-radius: 12px; color: white; width: 100%; margin-bottom: 10px; }
+        .btn-add { background: var(--accent); color: #000; border: none; padding: 14px 30px; border-radius: 12px; font-weight: 800; cursor: pointer; }
+        #modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index:1000; align-items:center; justify-content:center; }
         .modal-box { background: #1f2937; padding: 40px; border-radius: 24px; width: 450px; border: 1px solid var(--border); }
-        
-        input { background: #0b0f1a; border: 1px solid var(--border); padding: 14px; border-radius: 12px; color: white; width: 100%; margin-bottom: 15px; font-size: 14px; }
-        .btn-action { background: var(--accent); color: #000; border: none; padding: 14px; border-radius: 12px; font-weight: 800; width: 100%; cursor: pointer; }
     </style>
 </head>
 <body>
-
-    <aside>
-        <div class="logo">SUBJECTS_666</div>
-        <div style="opacity:0.4; font-size:12px;">Yönetim Paneli</div>
-    </aside>
-
+    <aside><div style="color:var(--accent); font-size:24px; font-weight:900;">SUBJECTS_666</div></aside>
     <main>
-        <div class="section-title">Yeni Kelime Tanımla</div>
-        <div class="card" style="display:flex; gap:15px;">
-            <input type="text" id="in-name" placeholder="Kelime" style="margin:0">
-            <input type="text" id="in-img" placeholder="Görsel URL" style="margin:0">
-            <button class="btn-action" style="width:auto; padding:0 30px" onclick="addWord()">Ekle</button>
+        <div class="card" style="display:flex; gap:10px;">
+            <input type="text" id="in-name" placeholder="Kelime">
+            <input type="text" id="in-img" placeholder="Görsel URL">
+            <button class="btn-add" onclick="addWord()">Ekle</button>
         </div>
-
-        <div class="section-title">Kelime Listesi ve Analiz</div>
         <div class="card">
             <table>
-                <thead>
-                    <tr>
-                        <th>Kelime / Karişik</th>
-                        <th>İstatistik</th>
-                        <th>Durum</th>
-                        <th>Analiz</th>
-                        <th>İşlem</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>KELİME / KARIŞIK</th><th>İSTATİSTİK</th><th>DURUM</th><th>ANALİZ</th><th>İŞLEM</th></tr></thead>
                 <tbody id="list"></tbody>
             </table>
         </div>
     </main>
 
-    <div id="modal">
-        <div class="modal-box">
-            <h2 id="m-title" style="margin-top:0">Analiz</h2>
-            <canvas id="m-chart" style="margin-bottom:20px; max-height: 180px;"></canvas>
-            
-            <label style="font-size:12px; opacity:0.5">Kelime Adı:</label>
-            <input type="text" id="m-name">
-            
-            <label style="font-size:12px; opacity:0.5">Görsel URL:</label>
-            <input type="text" id="m-img">
-            
-            <button class="btn-action" onclick="saveEdit()">Değişiklikleri Uygula</button>
-            <button onclick="closeModal()" style="background:none; border:none; color:white; width:100%; margin-top:15px; cursor:pointer; opacity:0.5">Vazgeç</button>
-        </div>
-    </div>
+    <div id="modal"><div class="modal-box">
+        <h2 id="m-title">Analiz</h2>
+        <canvas id="m-chart" style="margin-bottom:20px; max-height: 180px;"></canvas>
+        <input type="text" id="m-name" placeholder="Kelime Adı">
+        <input type="text" id="m-img" placeholder="Görsel URL">
+        <button class="btn-add" style="width:100%" onclick="saveEdit()">Kaydet</button>
+        <button onclick="closeModal()" style="background:none; border:none; color:white; width:100%; margin-top:15px; cursor:pointer; opacity:0.5">Kapat</button>
+    </div></div>
 
     <script>
         let data = JSON.parse(localStorage.getItem('subjectWords')) || [];
-
         function render() {
-            const list = document.getElementById('list');
-            list.innerHTML = '';
+            const list = document.getElementById('list'); list.innerHTML = '';
             data.forEach(w => {
                 let score = w.tries > 0 ? Math.round((w.hits/w.tries)*100) : 0;
-                list.innerHTML += `
-                    <tr>
-                        <td>
-                            <span class="word-main">${w.name}</span>
-                            <span class="word-sub">${w.scrambled || '---'}</span>
-                        </td>
-                        <td>${w.hits || 0} Tahmin / %${score} Başarı</td>
-                        <td><span class="status-badge">Aktif</span></td>
-                        <td><button class="btn-arrow" onclick="openModal(${w.id})">➔</button></td>
-                        <td><button class="btn-del" onclick="del(${w.id})">Sil</button></td>
-                    </tr>
-                `;
+                list.innerHTML += `<tr>
+                    <td><span class="word-main">${w.name}</span><span class="word-sub">${w.scrambled}</span></td>
+                    <td>${w.hits || 0} Tahmin / %${score} Başarı</td>
+                    <td><span class="status-badge">Aktif</span></td>
+                    <td><button class="btn-arrow" onclick="openModal(${w.id})">➔</button></td>
+                    <td><button onclick="del(${w.id})" style="background:none; border:none; color:#ff4d4d; cursor:pointer">Sil</button></td>
+                </tr>`;
             });
             localStorage.setItem('subjectWords', JSON.stringify(data));
         }
-
         function addWord() {
             const n = document.getElementById('in-name').value;
             const i = document.getElementById('in-img').value;
             if(!n) return;
-            data.push({ 
-                id: Date.now(), 
-                name: n, 
-                scrambled: n.split('').sort(() => Math.random() - 0.5).join(''), 
-                img: i || 'https://picsum.photos/400/250', 
-                hits: 0, 
-                tries: 0 
-            });
-            render();
-            document.getElementById('in-name').value = '';
+            data.push({ id: Date.now(), name: n, scrambled: n.split('').sort(()=>Math.random()-0.5).join(''), img: i || 'https://picsum.photos/400/250', hits: 0, tries: 0 });
+            render(); document.getElementById('in-name').value = '';
         }
-
         let curId = null; let chart = null;
         function openModal(id) {
             curId = id; const w = data.find(x => x.id === id);
             document.getElementById('m-title').innerText = w.name;
-            document.getElementById('m-name').value = w.name;
-            document.getElementById('m-img').value = w.img;
+            document.getElementById('m-name').value = w.name; document.getElementById('m-img').value = w.img;
             document.getElementById('modal').style.display = 'flex';
-            
             const ctx = document.getElementById('m-chart').getContext('2d');
             if(chart) chart.destroy();
-            chart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Başarılı', 'Hatalı'],
-                    datasets: [{
-                        data: [w.hits, (w.tries - w.hits < 0 ? 0 : w.tries - w.hits)],
-                        backgroundColor: ['#00ff88', '#ff4d4d']
-                    }]
-                },
-                options: { plugins: { legend: { display: false } } }
-            });
+            chart = new Chart(ctx, { type: 'bar', data: { labels: ['Başarılı', 'Hatalı'], datasets: [{ data: [w.hits, (w.tries - w.hits < 0 ? 0 : w.tries - w.hits)], backgroundColor: ['#00ff88', '#ff4d4d'] }] }, options: { plugins: { legend: { display: false } } } });
         }
-
         function saveEdit() {
             const w = data.find(x => x.id === curId);
-            w.name = document.getElementById('m-name').value;
-            w.img = document.getElementById('m-img').value;
+            w.name = document.getElementById('m-name').value; w.img = document.getElementById('m-img').value;
             render(); closeModal();
         }
-
         function del(id) { if(confirm('Silinsin mi?')) { data = data.filter(x => x.id !== id); render(); } }
         function closeModal() { document.getElementById('modal').style.display = 'none'; }
-        
         render();
     </script>
 </body>
