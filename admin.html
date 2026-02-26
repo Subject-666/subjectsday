@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speaking Feelings | Admin Panel</title>
+    <style>
+        :root {
+            --bg: #05070a;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --accent: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: white;
+            font-family: 'Inter', system-ui, sans-serif;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar / Menü */
+        .sidebar {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255,255,255,0.1);
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar h2 {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            opacity: 0.8;
+            letter-spacing: 1px;
+        }
+
+        .nav-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        /* Ana İçerik */
+        .main-content {
+            flex: 1;
+            padding: 50px;
+            overflow-y: auto;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        /* Kartlar ve Form */
+        .admin-card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 18px;
+            margin-top: 8px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.3);
+            color: white;
+        }
+
+        button.add-btn {
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button.add-btn:hover { transform: scale(1.05); }
+
+        /* Kelime Listesi Tablosu */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th { text-align: left; padding: 15px; opacity: 0.5; font-weight: 400; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+        .stat-badge {
+            background: rgba(255,255,255,0.1);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>SUBJECTS DAY</h2>
+        <div class="nav-item active">Kelimeleri Yönet</div>
+        <div class="nav-item">İstatistikler</div>
+        <div class="nav-item" onclick="location.href='index.html'">Siteye Dön</div>
+    </div>
+
+    <div class="main-content">
+        <div class="header-row">
+            <h1>Admin Paneli</h1>
+            <div id="status">Sistem Aktif</div>
+        </div>
+
+        <div class="admin-card">
+            <h3>Yeni Kelime / Veri Ekle</h3>
+            <div class="grid">
+                <div>
+                    <label>Doğru Kelime</label>
+                    <input type="text" id="wordName" placeholder="Örn: Serendipity">
+                </div>
+                <div>
+                    <label>Çarktaki Karışık Hal</label>
+                    <input type="text" id="scrambledWord" placeholder="Örn: ytipidneres">
+                </div>
+                <div>
+                    <label>Görsel URL</label>
+                    <input type="text" id="imgUrl" placeholder="https://...">
+                </div>
+                <div>
+                    <label>Ses Dosyası URL</label>
+                    <input type="text" id="audioUrl" placeholder="https://...">
+                </div>
+            </div>
+            <button class="add-btn" onclick="addNewWord()">Sisteme Kaydet</button>
+        </div>
+
+        <div class="admin-card">
+            <h3>Mevcut Kelimeler ve Başarı Oranları</h3>
+            <table id="wordTable">
+                <thead>
+                    <tr>
+                        <th>Kelime</th>
+                        <th>Görsel</th>
+                        <th>Ses</th>
+                        <th>Doğru Telaffuz</th>
+                        <th>İşlem</th>
+                    </tr>
+                </thead>
+                <tbody id="wordList">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Örnek başlangıç verisi (Gerçekte bunu veritabanınızdan çekeceksiniz)
+        let words = [
+            {id: 1, name: "Empati", scrambled: "itapme", audio: "var", img: "var", stats: 45},
+            {id: 2, name: "Melankoli", scrambled: "iloknalem", audio: "var", img: "var", stats: 12}
+        ];
+
+        function renderWords() {
+            const list = document.getElementById('wordList');
+            list.innerHTML = "";
+            words.forEach(w => {
+                list.innerHTML += `
+                    <tr>
+                        <td><strong>${w.name}</strong><br><small style="opacity:0.5">${w.scrambled}</small></td>
+                        <td>${w.img ? '✅' : '❌'}</td>
+                        <td>${w.audio ? '✅' : '❌'}</td>
+                        <td><span class="stat-badge">${w.stats} Kez</span></td>
+                        <td><button style="background:none; border:1px solid red; color:red; cursor:pointer; border-radius:5px;" onclick="deleteWord(${w.id})">Sil</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function addNewWord() {
+            // Burada API'nize (Vercel Serverless Functions vb.) istek atacaksınız
+            const name = document.getElementById('wordName').value;
+            if(!name) return alert("Kelime giriniz!");
+            
+            alert(name + " başarıyla eklendi (Simülasyon)");
+            // words.push(...) ve renderWords() işlemleri buraya gelir
+        }
+
+        function deleteWord(id) {
+            if(confirm("Bu kelimeyi silmek istediğinize emin misiniz?")) {
+                words = words.filter(w => w.id !== id);
+                renderWords();
+            }
+        }
+
+        renderWords();
+    </script>
+</body>
+</html>
