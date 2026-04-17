@@ -70,21 +70,9 @@
       color: #0f172a;
     }
     .btn-listen:hover { background: #f1f5f9; transform: translateY(-1px); }
-    .btn-speak {
-      background: rgba(0, 255, 157, 0.12);
-      color: var(--accent);
-      border: 1.5px solid var(--accent);
-    }
-    .btn-speak:hover:not(:disabled) {
-      background: rgba(0, 255, 157, 0.22);
-      transform: translateY(-1px);
-    }
-    .btn-speak.active {
-      background: var(--danger);
-      color: white;
-      border-color: var(--danger);
-      animation: pulse 1.8s infinite ease-in-out;
-    }
+
+    
+   
     @keyframes pulse {
       0%,100% { transform: scale(1); }
       50% { transform: scale(1.06); }
@@ -123,7 +111,7 @@
   <img id="word-image" src="" alt="Word visual" crossorigin="anonymous">
   <h1 id="target-text">...</h1>
   <button class="btn-listen" type="button" onclick="playWord()">🔊 Listen</button>
-  <button id="speakBtn" class="btn-speak" type="button">🎤 Start Speaking</button>
+
   <div id="msg"></div>
 </div>
 
