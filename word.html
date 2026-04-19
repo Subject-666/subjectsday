@@ -48,13 +48,47 @@
         document.getElementById('target-text').innerText = target;
         if(wInfo) document.getElementById('word-image').src = wInfo.img;
 
-        function playAudio() {
-            window.speechSynthesis.cancel();
-            const utter = new SpeechSynthesisUtterance(target);
-            utter.lang = 'en-US';
-            window.speechSynthesis.speak(utter);
+       function playAudio() {
+    window.speechSynthesis.cancel(); // Önceki sesleri sustur
+    
+    const textToSpeak = document.getElementById('target-text').innerText;
+    const msg = new SpeechSynthesisUtterance(textToSpeak);
+    const genderPref = localStorage.getItem('preferredGender') || 'female';
+    
+    // Tarayıcıdaki sesleri al
+    const voices = window.speechSynthesis.getVoices();
+    
+    // İngilizce sesler arasından cinsiyete göre en iyisini bulmaya çalış
+    let selectedVoice = voices.find(v => {
+        const name = v.name.toLowerCase();
+        const isEnglish = v.lang.includes('en');
+        if (genderPref === 'female') {
+            // Genelde 'Google US English' veya 'Samantha' kadın sesidir
+            return isEnglish && (name.includes('google') || name.includes('samantha') || name.includes('zira'));
+        } else {
+            // 'Microsoft David' veya 'Google UK English Male' erkek sesidir
+            return isEnglish && (name.includes('male') || name.includes('david') || name.includes('guy'));
         }
+    });
 
+    // Eğer özel bir ses bulunamazsa herhangi bir İngilizce sesi seç
+    if (!selectedVoice) {
+        selectedVoice = voices.find(v => v.lang.includes('en'));
+    }
+
+    msg.voice = selectedVoice;
+    msg.lang = 'en-US';
+    
+    // İnsancıl ve yumuşak tını ayarları
+    msg.rate = 0.85;  // Biraz yavaşlatınca daha doğal ve tane tane oluyor
+    msg.pitch = genderPref === 'female' ? 1.1 : 0.9; // Kadın için hafif tiz, erkek için hafif bas
+    msg.volume = 1.0;
+
+    window.speechSynthesis.speak(msg);
+}
+
+// Seslerin yüklenmesi için gerekli tetikleyici
+window.speechSynthesis.onvoiceschanged = () => { playAudio; }; 
         function recordResult(isSuccess) {
             const msg = document.getElementById('msg');
             
