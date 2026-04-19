@@ -2,261 +2,130 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Speaking Feelings | Admin Panel</title>
+    <title>Admin Dashboard | Subjects_666</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --bg: #05070a;
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --accent: #ffffff;
-            --success: #00ff9d;
-            --warning: #ffcc00;
-            --danger: #ff4d6a;
-        }
-        body {
-            margin: 0;
-            background: var(--bg);
-            color: white;
-            font-family: 'Inter', system-ui, sans-serif;
-            display: flex;
-            min-height: 100vh;
-        }
-        /* Sidebar */
-        .sidebar {
-            width: 280px;
-            background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(20px);
-            border-right: 1px solid rgba(255,255,255,0.1);
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-        }
-        .sidebar h2 {
-            font-size: 1.2rem;
-            margin-bottom: 40px;
-            opacity: 0.8;
-            letter-spacing: 1px;
-        }
-        .nav-item {
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: 0.3s;
-            color: rgba(255,255,255,0.6);
-        }
-        .nav-item:hover, .nav-item.active {
-            background: rgba(255,255,255,0.1);
-            color: white;
-        }
-        /* Main */
-        .main-content {
-            flex: 1;
-            padding: 50px;
-            overflow-y: auto;
-        }
-        .header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-        .admin-card {
-            background: var(--card-bg);
-            border-radius: 24px;
-            padding: 30px;
-            border: 1px solid rgba(255,255,255,0.1);
-            margin-bottom: 30px;
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
-        input, select {
-            width: 100%;
-            padding: 12px 18px;
-            margin-top: 8px;
-            margin-bottom: 20px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(0,0,0,0.3);
-            color: white;
-        }
-        button.add-btn {
-            background: #fff;
-            color: #000;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        button.add-btn:hover { transform: scale(1.05); }
-        /* Table */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th {
-            text-align: left;
-            padding: 15px;
-            opacity: 0.6;
-            font-weight: 400;
-            border-bottom: 1px solid rgba(255,255,255,0.15);
-        }
-        td {
-            padding: 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-        }
-        .stat-badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-        .badge-success { background: rgba(0,255,157,0.15); color: var(--success); }
-        .badge-warning { background: rgba(255,204,0,0.15); color: var(--warning); }
-        .badge-danger  { background: rgba(255,77,106,0.15); color: var(--danger); }
-        .delete-btn {
-            background: none;
-            border: 1px solid var(--danger);
-            color: var(--danger);
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
+        :root { --bg: #0b1120; --card: #111827; --accent: #00ff88; --border: rgba(255,255,255,0.08); }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Inter', sans-serif; display: flex; height: 100vh; }
+        aside { width: 280px; background: #0d1117; padding: 40px 20px; border-right: 1px solid var(--border); }
+        main { flex: 1; padding: 50px; overflow-y: auto; }
+        .card { background: var(--card); border-radius: 16px; border: 1px solid var(--border); padding: 30px; margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; font-size: 12px; opacity: 0.4; padding: 15px; border-bottom: 1px solid var(--border); text-transform: uppercase; }
+        td { padding: 20px 15px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .word-main { font-weight: 700; font-size: 18px; display: block; }
+        .status-badge { background: rgba(0, 255, 136, 0.1); color: var(--accent); padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; }
+        input[type="text"], input[type="file"] { background: #0b0f1a; border: 1px solid var(--border); padding: 14px; border-radius: 12px; color: white; width: 100%; margin-bottom: 10px; }
+        .btn-add { background: var(--accent); color: #000; border: none; padding: 14px 30px; border-radius: 12px; font-weight: 800; cursor: pointer; width: 100%; }
+        #modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index:1000; align-items:center; justify-content:center; }
+        .modal-box { background: #1f2937; padding: 40px; border-radius: 24px; width: 450px; border: 1px solid var(--border); }
+        .img-preview { width: 100px; height: 60px; object-fit: cover; border-radius: 8px; background: #000; }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <h2>SUBJECTS DAY</h2>
-        <div class="nav-item">Kelimeleri Yönet</div>
-        <div class="nav-item active">İstatistikler</div>
-        <div class="nav-item" onclick="location.href='index.html'">Siteye Dön</div>
-    </div>
-    <div class="main-content">
-        <div class="header-row">
-            <h1>Admin Paneli - İstatistikler</h1>
-            <div id="status">Sistem Aktif</div>
-        </div>
-
-        <!-- Kelime Ekleme (korundu, ama gerçek backend yoksa simülasyon) -->
-        <div class="admin-card">
-            <h3>Yeni Kelime / Veri Ekle</h3>
-            <div class="grid">
-                <div>
-                    <label>Doğru Kelime</label>
-                    <input type="text" id="wordName" placeholder="Örn: Serendipity">
-                </div>
-                <div>
-                    <label>Çarktaki Karışık Hal</label>
-                    <input type="text" id="scrambledWord" placeholder="Örn: ytipidneres">
-                </div>
-                <div>
-                    <label>Görsel URL</label>
-                    <input type="text" id="imgUrl" placeholder="https://...">
-                </div>
-                
+    <aside><div style="color:var(--accent); font-size:24px; font-weight:900;">SUBJECTS_666</div></aside>
+    <main>
+        <div class="card">
+            <h3 style="margin-top:0">Yeni Kelime ve Görsel Ekle</h3>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                <input type="text" id="in-name" placeholder="Kelime Giriniz">
+                <input type="file" id="in-file" accept="image/*">
             </div>
-            <button class="add-btn" onclick="addNewWord()">Sisteme Kaydet</button>
+            <button class="btn-add" onclick="processAndAdd()">Sisteme Kaydet</button>
         </div>
-
-        <!-- Gerçek İstatistik Tablosu -->
-        <div class="admin-card">
-            <h3>Konuşma Pratiği İstatistikleri</h3>
-            <p style="opacity:0.7; margin-bottom:20px;">Tüm denemeler (son denemeden en eskiye doğru sıralı)</p>
-            <table id="statsTable">
-                <thead>
-                    <tr>
-                        <th>Kelime</th>
-                        <th>Deneme Sayısı</th>
-                        <th>Başarılı</th>
-                        <th>Başarı Oranı</th>
-                        <th>Son Deneme</th>
-                    </tr>
-                </thead>
-                <tbody id="statsBody"></tbody>
+        <div class="card">
+            <table>
+                <thead><tr><th>GÖRSEL</th><th>KELİME</th><th>BAŞARI ANALİZİ</th><th>DURUM</th><th>DETAY</th><th>İŞLEM</th></tr></thead>
+                <tbody id="list"></tbody>
             </table>
         </div>
-    </div>
+    </main>
+
+    <div id="modal"><div class="modal-box">
+        <h2 id="m-title" style="margin-top:0">Veri Analizi</h2>
+        <canvas id="m-chart" style="margin-bottom:20px; max-height: 180px;"></canvas>
+        <button onclick="resetStats()" style="background:#ff4d4d; color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; width:100%; cursor:pointer; margin-bottom:10px">İstatistikleri Sıfırla</button>
+        <button onclick="closeModal()" style="background:none; border:none; color:white; width:100%; cursor:pointer; opacity:0.5; padding:10px">Paneli Kapat</button>
+    </div></div>
 
     <script>
-        // localStorage'dan istatistikleri çek (word.html'den kaydedilen)
-        function loadAndRenderStats() {
-            const statsData = JSON.parse(localStorage.getItem('allSpeakingStats') || '[]');
-            const tbody = document.getElementById('statsBody');
-            tbody.innerHTML = '';
+        let data = JSON.parse(localStorage.getItem('subjectWords')) || [];
+        let chart = null;
+        let curId = null;
 
-            if (statsData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; opacity:0.6;">Henüz konuşma pratiği verisi yok. Kelimeleri pratik yapmaya başla!</td></tr>';
-                return;
+        function render() {
+            const list = document.getElementById('list');
+            list.innerHTML = '';
+            data.forEach(w => {
+                let score = w.tries > 0 ? Math.round((w.hits / w.tries) * 100) : 0;
+                list.innerHTML += `<tr>
+                    <td><img src="${w.img}" class="img-preview"></td>
+                    <td><span class="word-main">${w.name}</span></td>
+                    <td><strong>%${score}</strong> (${w.hits} Doğru / ${w.tries} Deneme)</td>
+                    <td><span class="status-badge">Aktif</span></td>
+                    <td><button style="background:none; border:none; color:white; font-size:20px; cursor:pointer" onclick="openModal(${w.id})">➔</button></td>
+                    <td><button onclick="del(${w.id})" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-weight:bold">Sil</button></td>
+                </tr>`;
+            });
+            localStorage.setItem('subjectWords', JSON.stringify(data));
+        }
+
+        async function processAndAdd() {
+            const nameInput = document.getElementById('in-name');
+            const fileInput = document.getElementById('in-file');
+            
+            if(!nameInput.value) return alert("Efendim, lütfen bir kelime giriniz.");
+            
+            let imageData = "https://picsum.photos/400/250"; 
+
+            if(fileInput.files && fileInput.files[0]) {
+                imageData = await toBase64(fileInput.files[0]);
             }
 
-            // En yeniden eskiye sırala
-            statsData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            data.push({ id: Date.now(), name: nameInput.value.trim(), img: imageData, hits: 0, tries: 0 });
+            render();
+            nameInput.value = ''; fileInput.value = '';
+        }
 
-            statsData.forEach(stat => {
-                const accuracyNum = stat.tries > 0 ? (stat.hits / stat.tries) * 100 : 0;
-                let badgeClass = 'badge-danger';
-                let badgeText = accuracyNum.toFixed(1) + '%';
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
 
-                if (accuracyNum >= 80) badgeClass = 'badge-success';
-                else if (accuracyNum >= 50) badgeClass = 'badge-warning';
-
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><strong>${stat.word}</strong></td>
-                    <td>${stat.tries}</td>
-                    <td>${stat.hits}</td>
-                    <td><span class="stat-badge ${badgeClass}">${badgeText}</span></td>
-                    <td>${new Date(stat.timestamp).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' })}</td>
-                `;
-                tbody.appendChild(row);
+        function openModal(id) {
+            curId = id; 
+            const w = data.find(x => x.id === id);
+            document.getElementById('m-title').innerText = w.name + " Analizi";
+            document.getElementById('modal').style.display = 'flex';
+            
+            const ctx = document.getElementById('m-chart').getContext('2d');
+            if(chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Başarılı', 'Hatalı'],
+                    datasets: [{
+                        data: [w.hits, (w.tries - w.hits < 0 ? 0 : w.tries - w.hits)],
+                        backgroundColor: ['#00ff88', '#ff4d4d'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: 'white' } } } }
             });
         }
 
-        // Kelime ekleme (simülasyon - gerçekte backend'e POST at)
-        function addNewWord() {
-            const name = document.getElementById('wordName').value.trim();
-            const scrambled = document.getElementById('scrambledWord').value.trim();
-            const img = document.getElementById('imgUrl').value.trim();
-            const audio = document.getElementById('audioUrl').value.trim();
-
-            if (!name) {
-                alert("En azından doğru kelimeyi giriniz!");
-                return;
-            }
-
-            // Mevcut kelimeleri çek (subjectWords)
-            let words = JSON.parse(localStorage.getItem('subjectWords') || '[]');
-
-            // Yeni kelime objesi
-            const newWord = {
-                name: name,
-                scrambled: scrambled || '',
-                img: img || '',
-                audio: audio || '',
-                tries: 0,
-                hits: 0
-            };
-
-            words.push(newWord);
-            localStorage.setItem('subjectWords', JSON.stringify(words));
-
-            alert(`"${name}" başarıyla eklendi! (localStorage'a kaydedildi)`);
-
-            // Formu temizle
-            document.getElementById('wordName').value = '';
-            document.getElementById('scrambledWord').value = '';
-            document.getElementById('imgUrl').value = '';
-            document.getElementById('audioUrl').value = '';
+        function resetStats() {
+            const w = data.find(x => x.id === curId);
+            w.hits = 0; w.tries = 0;
+            render(); closeModal();
         }
 
-        // Sayfa yüklendiğinde istatistikleri göster
-        window.onload = loadAndRenderStats;
+        function del(id) { if(confirm('Bu veriyi silmek istediğinize emin misiniz?')) { data = data.filter(x => x.id !== id); render(); } }
+        function closeModal() { document.getElementById('modal').style.display = 'none'; }
+        
+        render();
     </script>
 </body>
 </html>
