@@ -3,170 +3,187 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Speaking Feelings</title>
+    <title>Kelime Listesi | Subjects_666</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; }
+        :root {
+            --bg-main: #090e17;
+            --bg-card: #131c2b;
+            --accent: #00e676;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.06);
+        }
+
+        body { 
+            margin: 0; 
+            background: var(--bg-main); 
+            color: var(--text-main); 
+            font-family: 'Inter', sans-serif; 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        header { 
+            background: #0b111a; 
+            padding: 30px 50px; 
+            border-bottom: 1px solid var(--border); 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
         
-        html, body {
-            margin: 0;
-            height: 100%;
-            background: #0b0f1a; /* Eski koyu lacivert/siyah tonu */
-            font-family: system-ui, -apple-system, sans-serif;
-            overflow: hidden;
-            color: white;
+        .logo { 
+            color: var(--accent); 
+            font-size: 26px; 
+            font-weight: 800; 
+            letter-spacing: 1.5px; 
+            text-shadow: 0 0 15px rgba(0, 230, 118, 0.2); 
+        }
+        
+        .subtitle { 
+            color: var(--text-muted); 
+            font-size: 14px; 
+            font-weight: 600; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
         }
 
-        /* Parlama Efekti - Tam merkezleme sağlandı */
-        .glow {
-            position: fixed;
-            width: 800px;
-            height: 800px;
-            /* Eski renk: Beyazımsı soft parlama */
-            background: radial-gradient(circle, rgba(255,255,255,.08), transparent 60%);
-            pointer-events: none;
-            left: 0;
-            top: 0;
-            transform: translate(-50%, -50%);
-            transition: 0.1s ease-out;
-            z-index: 0;
-        }
-
-        .center {
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .card {
-            position: relative;
-            z-index: 1;
-            background: rgba(255, 255, 255, .06);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            padding: 50px;
-            border-radius: 30px;
-            box-shadow: 0 40px 120px rgba(0,0,0,.7);
-            text-align: center;
+        main { 
+            flex: 1; 
+            padding: 50px; 
+            max-width: 1400px;
+            margin: 0 auto;
             width: 100%;
-            max-width: 420px;
-            transition: .4s cubic-bezier(.2,.8,.2,1);
+            box-sizing: border-box;
         }
 
-        .card:hover { transform: scale(1.03); }
+        .cards-container { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+            gap: 35px; 
+        }
 
-        h1 {
-            font-size: 28px;
-            margin-bottom: 30px;
+        .card { 
+            background: var(--bg-card); 
+            border-radius: 20px; 
+            border: 1px solid var(--border); 
+            overflow: hidden; 
+            cursor: pointer; 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            text-decoration: none; 
+            display: flex; 
+            flex-direction: column; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+        }
+        
+        .card:hover { 
+            transform: translateY(-10px); 
+            border-color: rgba(0, 230, 118, 0.4); 
+            box-shadow: 0 20px 40px rgba(0, 230, 118, 0.15); 
+        }
+
+        .card-img { 
+            width: 100%; 
+            height: 220px; 
+            object-fit: cover; 
+            border-bottom: 1px solid var(--border); 
+            background: #000; 
+        }
+
+        .card-body { 
+            padding: 25px; 
+            text-align: center; 
+        }
+        
+        .card-title { 
+            margin: 0 0 12px 0; 
+            color: white; 
+            font-size: 22px; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            letter-spacing: 2px; 
+        }
+        
+        .stat-badge { 
+            display: inline-block; 
+            background: rgba(255,255,255,0.03); 
+            color: var(--text-muted); 
+            padding: 8px 16px; 
+            border-radius: 20px; 
+            font-size: 13px; 
+            font-weight: 600; 
+            border: 1px solid var(--border); 
+            transition: all 0.3s;
+        }
+        
+        .card:hover .stat-badge {
+            background: rgba(0, 230, 118, 0.1);
+            color: var(--accent);
+            border-color: rgba(0, 230, 118, 0.2);
+        }
+        
+        .empty-state { 
+            text-align: center; 
+            color: var(--text-muted); 
+            font-size: 18px; 
+            margin-top: 100px; 
             font-weight: 600;
-        }
-
-        input {
-            width: 100%;
-            padding: 16px 20px;
-            border-radius: 999px;
-            border: none;
-            outline: none;
-            background: #111;
-            color: white;
-            font-size: 16px;
-            margin-bottom: 20px;
-        }
-
-        button {
-            width: 100%;
-            padding: 16px;
-            border-radius: 999px;
-            border: none;
-            background: white;
-            color: black;
-            font-weight: 600;
-            font-size: 16px;
-            cursor: pointer;
-            transition: .3s;
-        }
-
-        button:hover { transform: scale(1.05); }
-
-        .credit {
-            position: fixed;
-            right: 20px;
-            bottom: 15px;
-            font-size: 11px;
-            opacity: .4;
-        }
-
-        /* ===== MOBİL UYUMLULUK ===== */
-        @media (max-width: 480px) {
-            .card {
-                padding: 40px 25px;
-                border-radius: 24px;
-            }
-            
-            h1 { font-size: 24px; }
-            
-            .glow {
-                width: 400px; /* Mobilde parlamayı küçültüyoruz */
-                height: 400px;
-            }
-
-            .credit {
-                left: 0;
-                right: 0;
-                text-align: center;
-            }
+            grid-column: 1 / -1;
+            padding: 40px;
+            background: var(--bg-card);
+            border-radius: 20px;
+            border: 1px dashed rgba(255,255,255,0.1);
         }
     </style>
 </head>
 <body>
+    <header>
+        <div class="logo">SUBJECTS_666</div>
+        <div class="subtitle">Pratik Seçim Ekranı</div>
+    </header>
 
-    <div class="glow" id="glow"></div>
-
-    <div class="center">
-        <div class="card">
-            <h1>Speaking Feelings</h1>
-            <input id="key" placeholder="Enter keyword" autocomplete="off">
-            <button onclick="go()">Start</button>
-        </div>
-    </div>
-
-    <div class="credit">by Subject_666</div>
+    <main>
+        <div class="cards-container" id="cards-container">
+            </div>
+    </main>
 
     <script>
-        const glow = document.getElementById("glow");
-        
-        // Mouse ve Dokunmatik takibi
-        const moveGlow = (e) => {
-            const x = e.clientX || (e.touches && e.touches[0].clientX);
-            const y = e.clientY || (e.touches && e.touches[0].clientY);
+        function loadCards() {
+            const container = document.getElementById('cards-container');
+            const words = JSON.parse(localStorage.getItem('subjectWords')) || [];
             
-            if (x && y) {
-                glow.style.left = x + "px";
-                glow.style.top = y + "px";
-            }
-        };
-
-        document.addEventListener("mousemove", moveGlow);
-        document.addEventListener("touchmove", moveGlow);
-
-        async function go() {
-            const k = document.getElementById("key").value.trim();
-            if(!k) return;
-
-            if(k === "Subject_666") {
-                location.href = "admin.html";
+            if (words.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 40px; margin-bottom: 15px; opacity: 0.5;">📭</div>
+                        Sistemde henüz bir kelime bulunmuyor.<br>Lütfen yönetim panelinden yeni veri ekleyiniz.
+                    </div>`;
+                container.style.display = 'block';
                 return;
             }
 
-            // word.html'e yönlendiriyoruz
-            location.href = "word.html?key=" + encodeURIComponent(k);
+            container.style.display = 'grid';
+            container.innerHTML = '';
+            
+            words.forEach(w => {
+                let score = w.tries > 0 ? Math.round((w.hits / w.tries) * 100) : 0;
+                container.innerHTML += `
+                    <a href="word.html?key=${encodeURIComponent(w.name)}" class="card">
+                        <img src="${w.img}" class="card-img" alt="${w.name}">
+                        <div class="card-body">
+                            <h3 class="card-title">${w.name}</h3>
+                            <div class="stat-badge">Genel Başarı: %${score}</div>
+                        </div>
+                    </a>
+                `;
+            });
         }
 
-        // Enter tuşu desteği
-        document.getElementById("key").addEventListener("keypress", (e) => {
-            if (e.key === "Enter") go();
-        });
+        // Sayfa yüklendiğinde kartları getir
+        window.onload = loadCards;
     </script>
 </body>
 </html>
