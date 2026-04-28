@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | Subject_666</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Practice Mode | Subject_666</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { 
@@ -12,246 +11,165 @@
             --bg-card: #131c2b; 
             --accent: #00e676; 
             --accent-hover: #00c060;
+            --danger: #ff4d4d;
+            --danger-hover: #e60000;
             --text-main: #e2e8f0;
             --text-muted: #94a3b8;
             --border: rgba(255, 255, 255, 0.06); 
         }
         
-        body { margin: 0; background: var(--bg-main); color: var(--text-main); font-family: 'Inter', sans-serif; display: flex; height: 100vh; overflow: hidden; }
+        body { margin: 0; background: var(--bg-main); color: var(--text-main); font-family: 'Inter', sans-serif; display: flex; flex-direction: column; height: 100vh; align-items: center; justify-content: center; }
         
-        aside { width: 260px; background: #0b111a; padding: 40px 25px; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-        .logo { color: var(--accent); font-size: 22px; font-weight: 800; letter-spacing: 1px; text-shadow: 0 0 15px rgba(0, 230, 118, 0.2); }
-        .logo-sub { color: var(--text-muted); font-size: 12px; margin-top: 5px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
-        
-        main { flex: 1; padding: 40px 50px; overflow-y: auto; scroll-behavior: smooth; }
-        
-        .card { background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); padding: 30px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .card h3 { margin: 0 0 20px 0; font-size: 16px; color: white; font-weight: 600; letter-spacing: 0.5px; }
-        
-        .input-group { display: flex; gap: 15px; margin-bottom: 15px; }
-        input[type="text"] { flex: 1; background: #070b12; border: 1px solid var(--border); padding: 14px 20px; border-radius: 12px; color: white; font-size: 14px; transition: all 0.3s; outline: none; font-family: inherit; }
-        input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0, 230, 118, 0.1); }
-        
-        /* Ses Ayarları Özel Stil */
-        .voice-options { display: flex; gap: 30px; padding: 10px 0; }
-        .voice-option { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-        .voice-option input { accent-color: var(--accent); width: 18px; height: 18px; cursor: pointer; }
-        .voice-option span { font-size: 14px; color: var(--text-main); font-weight: 600; }
+        .header { position: absolute; top: 40px; text-align: center; }
+        .logo { color: var(--accent); font-size: 24px; font-weight: 800; letter-spacing: 2px; text-shadow: 0 0 15px rgba(0, 230, 118, 0.2); }
+        .logo-sub { color: var(--text-muted); font-size: 13px; margin-top: 5px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
 
-        input[type="file"] { display: none; }
-        .file-upload-label { flex: 1; background: #070b12; border: 1px dashed rgba(255,255,255,0.2); border-radius: 12px; padding: 14px 20px; color: var(--text-muted); font-size: 14px; cursor: pointer; transition: all 0.3s; text-align: center; display: flex; align-items: center; justify-content: center; }
-        .file-upload-label:hover { border-color: var(--accent); color: var(--accent); background: rgba(0, 230, 118, 0.02); }
+        .card { background: var(--bg-card); border-radius: 20px; border: 1px solid var(--border); padding: 40px; width: 400px; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.4); position: relative; overflow: hidden; }
         
-        .btn-add { background: var(--accent); color: #000; border: none; padding: 15px 30px; border-radius: 12px; font-weight: 800; cursor: pointer; width: 100%; font-size: 15px; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; }
-        .btn-add:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 230, 118, 0.2); }
+        .image-container { width: 100%; height: 220px; border-radius: 12px; overflow: hidden; margin-bottom: 25px; border: 1px solid var(--border); background: #070b12; display: flex; align-items: center; justify-content: center; }
+        .image-container img { width: 100%; height: 100%; object-fit: cover; }
         
-        table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        th { text-align: left; font-size: 11px; color: var(--text-muted); padding: 15px 20px; border-bottom: 1px solid var(--border); text-transform: uppercase; font-weight: 600; letter-spacing: 1px; }
-        td { padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.02); vertical-align: middle; transition: background 0.2s; }
-        tr:hover td { background: rgba(255,255,255,0.01); }
-        
-        .img-preview { width: 60px; height: 40px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
-        .word-main { font-weight: 600; font-size: 15px; color: white; }
-        .stat-text { color: var(--text-muted); font-size: 13px; }
-        .stat-highlight { color: white; font-weight: 600; }
-        
-        .status-badge { background: rgba(0, 230, 118, 0.1); color: var(--accent); padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; border: 1px solid rgba(0, 230, 118, 0.2); }
-        
-        .btn-icon { background: none; border: none; font-size: 18px; cursor: pointer; transition: all 0.2s; opacity: 0.6; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; }
-        .btn-icon.arrow { color: white; background: rgba(255,255,255,0.05); }
-        .btn-icon.arrow:hover { opacity: 1; background: var(--accent); color: black; transform: translateX(3px); }
-        .btn-icon.delete { color: #ff4d4d; background: rgba(255, 77, 77, 0.05); }
-        .btn-icon.delete:hover { opacity: 1; background: #ff4d4d; color: white; }
+        .word-display { font-size: 28px; font-weight: 800; color: white; margin-bottom: 30px; letter-spacing: 1px; min-height: 35px; }
+        .hidden-word { filter: blur(8px); transition: filter 0.3s ease; cursor: pointer; user-select: none; }
+        .hidden-word:hover { filter: blur(4px); }
+        .revealed-word { filter: blur(0); }
 
-        #modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index:1000; align-items:center; justify-content:center; opacity: 0; animation: fadeIn 0.3s forwards; }
-        @keyframes fadeIn { to { opacity: 1; } }
-        .modal-box { background: var(--bg-card); padding: 40px; border-radius: 20px; width: 400px; border: 1px solid var(--border); box-shadow: 0 25px 50px rgba(0,0,0,0.5); transform: translateY(20px); animation: slideUp 0.3s forwards; }
-        @keyframes slideUp { to { transform: translateY(0); } }
-        
-        .modal-title { margin: 0 0 25px 0; color: white; font-size: 18px; font-weight: 600; text-align: center; }
-        .btn-reset { background: rgba(255, 77, 77, 0.1); color: #ff4d4d; border: 1px solid rgba(255, 77, 77, 0.2); padding: 12px; border-radius: 10px; font-weight: 600; width: 100%; cursor: pointer; margin-bottom: 10px; transition: 0.2s; }
-        .btn-reset:hover { background: #ff4d4d; color: white; }
-        .btn-close { background: transparent; border: 1px solid var(--border); color: var(--text-muted); width: 100%; cursor: pointer; padding: 12px; border-radius: 10px; transition: 0.2s; font-weight: 600; }
-        .btn-close:hover { background: rgba(255,255,255,0.05); color: white; }
+        .btn-speak { background: transparent; border: 2px solid var(--accent); color: var(--accent); padding: 15px 30px; border-radius: 12px; font-weight: 800; cursor: pointer; width: 100%; font-size: 16px; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-speak:hover { background: rgba(0, 230, 118, 0.1); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 230, 118, 0.15); }
+        .btn-speak:active { transform: translateY(0); }
+
+        .action-buttons { display: flex; gap: 15px; }
+        .btn-action { flex: 1; padding: 15px; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 15px; transition: all 0.3s ease; text-transform: uppercase; border: none; }
+        .btn-success { background: rgba(0, 230, 118, 0.1); color: var(--accent); border: 1px solid rgba(0, 230, 118, 0.2); }
+        .btn-success:hover { background: var(--accent); color: #000; }
+        .btn-danger { background: rgba(255, 77, 77, 0.1); color: var(--danger); border: 1px solid rgba(255, 77, 77, 0.2); }
+        .btn-danger:hover { background: var(--danger); color: white; }
+
+        .progress { color: var(--text-muted); font-size: 13px; margin-top: 25px; font-weight: 600; }
+        .empty-state { color: var(--text-muted); font-size: 16px; padding: 40px 0; }
     </style>
 </head>
 <body>
-    <aside>
+
+    <div class="header">
         <div class="logo">SUBJECT_666</div>
-        <div class="logo-sub">Yönetim Paneli</div>
-    </aside>
-
-    <main>
-        <div class="card">
-            <h3>Sistem Ses Ayarları</h3>
-            <div class="voice-options">
-                <label class="voice-option">
-                    <input type="radio" name="voiceGender" value="female" onchange="saveVoicePref('female')">
-                    <span>Kadın (Yumuşak & İnsancıl)</span>
-                </label>
-                <label class="voice-option">
-                    <input type="radio" name="voiceGender" value="male" onchange="saveVoicePref('male')">
-                    <span>Erkek (Tok & Karizmatik)</span>
-                </label>
-            </div>
-        </div>
-
-        <div class="card">
-            <h3>Yeni Veri Girişi</h3>
-            <div class="input-group">
-                <input type="text" id="in-name" placeholder="Eklenecek kelimeyi giriniz...">
-                <label for="in-file" class="file-upload-label" id="file-label">
-                    <span>Görsel Seç (İsteğe Bağlı)</span>
-                </label>
-                <input type="file" id="in-file" accept="image/*" onchange="updateFileName()">
-            </div>
-            <button class="btn-add" onclick="processAndAdd()">Sisteme Kaydet</button>
-        </div>
-
-        <div class="card" style="padding: 10px 0;">
-            <table>
-                <thead>
-                    <tr>
-                        <th style="padding-left: 30px;">Görsel</th>
-                        <th>Kelime</th>
-                        <th>Başarı Oranı</th>
-                        <th>Durum</th>
-                        <th>Analiz</th>
-                        <th style="padding-right: 30px;">İşlem</th>
-                    </tr>
-                </thead>
-                <tbody id="list"></tbody>
-            </table>
-        </div>
-    </main>
-
-    <div id="modal">
-        <div class="modal-box">
-            <h2 class="modal-title" id="m-title">Veri Analizi</h2>
-            <div style="position: relative; height: 200px; margin-bottom: 30px; display: flex; justify-content: center;">
-                <canvas id="m-chart"></canvas>
-            </div>
-            <button class="btn-reset" onclick="resetStats()">İstatistikleri Sıfırla</button>
-            <button class="btn-close" onclick="closeModal()">Paneli Kapat</button>
-        </div>
+        <div class="logo-sub">Sinirsel Pratik Modu</div>
     </div>
 
+    <div class="card" id="practice-card">
+        </div>
+
     <script>
-        let data = JSON.parse(localStorage.getItem('subjectWords')) || [];
-        let chart = null;
-        let curId = null;
+        let words = JSON.parse(localStorage.getItem('subjectWords')) || [];
+        let currentIndex = 0;
+        let isWordRevealed = false;
+        const synth = window.speechSynthesis;
 
-        // SES TERCİHİ FONKSİYONLARI (YENİ)
-        function saveVoicePref(gender) {
-            localStorage.setItem('preferredGender', gender);
+        function renderCard() {
+            const card = document.getElementById('practice-card');
+            
+            if (words.length === 0) {
+                card.innerHTML = `<div class="empty-state">Sistemde henüz veri bulunmuyor. Lütfen yönetim panelinden kelime ekleyin.</div>`;
+                return;
+            }
+
+            if (currentIndex >= words.length) {
+                card.innerHTML = `<div class="empty-state" style="color: var(--accent)">Tüm kelimeleri tamamladınız!<br><br><button class="btn-speak" onclick="resetPractice()" style="margin-top: 20px;">Baştan Başla</button></div>`;
+                return;
+            }
+
+            const currentWord = words[currentIndex];
+            isWordRevealed = false;
+
+            card.innerHTML = `
+                <div class="image-container">
+                    <img src="${currentWord.img}" alt="Görsel">
+                </div>
+                <div class="word-display hidden-word" id="word-text" onclick="toggleWord()" title="Kelimeyi görmek için tıklayın">
+                    ${currentWord.name}
+                </div>
+                <button class="btn-speak" onclick="speakCurrentWord()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                    Sesi Dinle
+                </button>
+                <div class="action-buttons">
+                    <button class="btn-action btn-danger" onclick="processAnswer(false)">Bilemedim</button>
+                    <button class="btn-action btn-success" onclick="processAnswer(true)">Bildim</button>
+                </div>
+                <div class="progress">İlerleme: ${currentIndex + 1} / ${words.length}</div>
+            `;
         }
 
-        function loadVoicePref() {
-            const pref = localStorage.getItem('preferredGender') || 'female';
-            const input = document.querySelector(`input[value="${pref}"]`);
-            if(input) input.checked = true;
-        }
-
-        function updateFileName() {
-            const fileInput = document.getElementById('in-file');
-            const label = document.getElementById('file-label');
-            if(fileInput.files.length > 0) {
-                label.innerHTML = `<span style="color:var(--accent)">✓ ${fileInput.files[0].name}</span>`;
-                label.style.borderColor = 'var(--accent)';
+        function toggleWord() {
+            const wordEl = document.getElementById('word-text');
+            if (isWordRevealed) {
+                wordEl.classList.add('hidden-word');
+                wordEl.classList.remove('revealed-word');
             } else {
-                label.innerHTML = `<span>Görsel Seç (İsteğe Bağlı)</span>`;
-                label.style.borderColor = 'rgba(255,255,255,0.2)';
+                wordEl.classList.remove('hidden-word');
+                wordEl.classList.add('revealed-word');
             }
+            isWordRevealed = !isWordRevealed;
         }
 
-        function render() {
-            const list = document.getElementById('list');
-            list.innerHTML = '';
-            data.forEach(w => {
-                let score = w.tries > 0 ? Math.round((w.hits / w.tries) * 100) : 0;
-                list.innerHTML += `<tr>
-                    <td style="padding-left: 30px;"><img src="${w.img}" class="img-preview"></td>
-                    <td><span class="word-main">${w.name}</span></td>
-                    <td class="stat-text"><span class="stat-highlight">%${score}</span> (${w.hits}D / ${w.tries}T)</td>
-                    <td><span class="status-badge">Aktif</span></td>
-                    <td><button class="btn-icon arrow" onclick="openModal(${w.id})">➔</button></td>
-                    <td style="padding-right: 30px;"><button class="btn-icon delete" onclick="del(${w.id})">✕</button></td>
-                </tr>`;
-            });
-            localStorage.setItem('subjectWords', JSON.stringify(data));
-        }
-
-        async function processAndAdd() {
-            const nameInput = document.getElementById('in-name');
-            const fileInput = document.getElementById('in-file');
-            
-            if(!nameInput.value) return alert("Efendim, lütfen geçerli bir kelime giriniz.");
-            
-            let imageData = "https://picsum.photos/400/250"; 
-
-            if(fileInput.files && fileInput.files[0]) {
-                imageData = await toBase64(fileInput.files[0]);
+        function speakCurrentWord() {
+            if (synth.speaking) {
+                synth.cancel();
             }
 
-            data.push({ id: Date.now(), name: nameInput.value.trim(), img: imageData, hits: 0, tries: 0 });
-            render();
+            const word = words[currentIndex].name;
+            const utterThis = new SpeechSynthesisUtterance(word);
+            utterThis.lang = 'tr-TR';
             
-            nameInput.value = ''; 
-            fileInput.value = '';
-            updateFileName();
-        }
-
-        const toBase64 = file => new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
-
-        function openModal(id) {
-            curId = id; 
-            const w = data.find(x => x.id === id);
-            document.getElementById('m-title').innerText = w.name + " Analizi";
-            document.getElementById('modal').style.display = 'flex';
+            // Admin panelinden gelen ses tercihini oku
+            const voicePref = localStorage.getItem('preferredGender') || 'female';
+            const voices = synth.getVoices();
             
-            const ctx = document.getElementById('m-chart').getContext('2d');
-            if(chart) chart.destroy();
+            // Türkçe sesleri filtrele
+            const trVoices = voices.filter(v => v.lang.includes('tr'));
             
-            Chart.defaults.color = '#94a3b8';
-            chart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Doğru', 'Yanlış'],
-                    datasets: [{
-                        data: [w.hits, (w.tries - w.hits < 0 ? 0 : w.tries - w.hits)],
-                        backgroundColor: ['#00e676', '#ff4d4d'],
-                        borderWidth: 0,
-                        hoverOffset: 4
-                    }]
-                },
-                options: { 
-                    cutout: '75%', 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } } 
-                    } 
+            if (trVoices.length > 0) {
+                // Basit bir cinsiyet tahmini (Tarayıcıya göre ses isimleri değişebilir)
+                if (voicePref === 'male') {
+                    const maleVoice = trVoices.find(v => v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('tolga'));
+                    utterThis.voice = maleVoice || trVoices[0];
+                } else {
+                    const femaleVoice = trVoices.find(v => v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('yelda'));
+                    utterThis.voice = femaleVoice || trVoices[0];
                 }
-            });
+            }
+
+            utterThis.rate = 0.9; // Biraz daha anlaşılır olması için hız ayarı
+            synth.speak(utterThis);
         }
 
-        function resetStats() {
-            const w = data.find(x => x.id === curId);
-            w.hits = 0; w.tries = 0;
-            render(); closeModal();
+        function processAnswer(isCorrect) {
+            // Veriyi güncelle
+            words[currentIndex].tries += 1;
+            if (isCorrect) {
+                words[currentIndex].hits += 1;
+            }
+            
+            // LocalStorage'a kaydet
+            localStorage.setItem('subjectWords', JSON.stringify(words));
+            
+            // Sonraki kelimeye geç
+            currentIndex++;
+            renderCard();
         }
 
-        function del(id) { if(confirm('Efendim, bu veriyi kalıcı olarak silmek istediğinize emin misiniz?')) { data = data.filter(x => x.id !== id); render(); } }
-        function closeModal() { document.getElementById('modal').style.display = 'none'; }
+        function resetPractice() {
+            currentIndex = 0;
+            renderCard();
+        }
+
+        // Ses motorunu yüklemek için ufak bir bekleme (Tarayıcı uyumluluğu için)
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = renderCard;
+        }
         
-        // BAŞLANGIÇ ÇALIŞTIRICILARI
-        render();
-        loadVoicePref();
+        // İlk render
+        renderCard();
     </script>
 </body>
 </html>
