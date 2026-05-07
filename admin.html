@@ -38,6 +38,8 @@
         
         .btn-add { background: var(--accent); color: #000; border: none; padding: 15px 30px; border-radius: 12px; font-weight: 800; cursor: pointer; width: 100%; font-size: 15px; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; }
         .btn-add:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 230, 118, 0.2); }
+        .btn-seed { margin-top: 10px; background: rgba(255,255,255,0.06); color: var(--text-main); border: 1px solid var(--border); padding: 13px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; font-size: 13px; transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 0.8px; }
+        .btn-seed:hover { border-color: var(--accent); color: var(--accent); background: rgba(0, 230, 118, 0.04); }
         
         table { width: 100%; border-collapse: separate; border-spacing: 0; }
         th { text-align: left; font-size: 11px; color: var(--text-muted); padding: 15px 20px; border-bottom: 1px solid var(--border); text-transform: uppercase; font-weight: 600; letter-spacing: 1px; }
@@ -87,7 +89,11 @@
                 </label>
                 <input type="file" id="in-file" accept="image/*" onchange="updateFileName()">
             </div>
+            <div class="input-group">
+                <input type="text" id="in-sentence" placeholder="Bu kelime için örnek cümle (isteğe bağlı)">
+            </div>
             <button class="btn-add" onclick="processAndAdd()">Sisteme Kaydet</button>
+            <button class="btn-seed" onclick="addSampleSet()">15 Kelime + Cümle + Görsel Ekle</button>
         </div>
 
         <div class="card" style="padding: 10px 0;">
@@ -96,6 +102,7 @@
                     <tr>
                         <th style="padding-left: 30px;">Görsel</th>
                         <th>Kelime</th>
+                        <th>Cümle</th>
                         <th>Başarı Oranı</th>
                         <th>Durum</th>
                         <th>Analiz</th>
@@ -143,6 +150,7 @@
                 list.innerHTML += `<tr>
                     <td style="padding-left: 30px;"><img src="${w.img}" class="img-preview"></td>
                     <td><span class="word-main">${w.name}</span></td>
+                    <td class="stat-text">${w.sentence || "-"}</td>
                     <td class="stat-text"><span class="stat-highlight">%${score}</span> (${w.hits}D / ${w.tries}T)</td>
                     <td><span class="status-badge">Aktif</span></td>
                     <td><button class="btn-icon arrow" onclick="openModal(${w.id})">➔</button></td>
@@ -155,29 +163,115 @@
         async function processAndAdd() {
             const nameInput = document.getElementById('in-name');
             const fileInput = document.getElementById('in-file');
+            const sentenceInput = document.getElementById('in-sentence');
             
             if(!nameInput.value) return alert("Efendim, lütfen geçerli bir kelime giriniz.");
             
             let imageData = "https://picsum.photos/400/250"; 
 
             if(fileInput.files && fileInput.files[0]) {
-                imageData = await toBase64(fileInput.files[0]);
+                imageData = await compressImage(fileInput.files[0]);
             }
 
-            data.push({ id: Date.now(), name: nameInput.value.trim(), img: imageData, hits: 0, tries: 0 });
-            render();
+            data.push({
+                id: Date.now() + Math.floor(Math.random() * 1000),
+                name: nameInput.value.trim(),
+                sentence: sentenceInput.value.trim(),
+                img: imageData,
+                hits: 0,
+                tries: 0,
+                sentenceHits: 0,
+                sentenceTries: 0
+            });
+
+            try {
+                render();
+            } catch (error) {
+                data.pop();
+                alert("Depolama alanı dolu. Daha küçük görsel deneyin veya bazı verileri silin.");
+                console.error(error);
+                return;
+            }
             
             nameInput.value = ''; 
+            sentenceInput.value = '';
             fileInput.value = '';
             updateFileName();
         }
 
-        const toBase64 = file => new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
+        function compressImage(file, maxWidth = 640, quality = 0.72) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const ratio = Math.min(1, maxWidth / img.width);
+                        const width = Math.round(img.width * ratio);
+                        const height = Math.round(img.height * ratio);
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    };
+                    img.onerror = reject;
+                    img.src = reader.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function addSampleSet() {
+            const sampleData = [
+                { name: "scared", sentence: "She felt scared while watching a horror movie.", img: "assets/scared.png" },
+                { name: "stubborn", sentence: "My little brother is stubborn and never changes his mind.", img: "assets/stubborn.png" },
+                { name: "outgoing", sentence: "She is very outgoing and makes friends easily.", img: "assets/outgoing.png" },
+                { name: "shy", sentence: "The shy student spoke very quietly in class.", img: "assets/shy.png" },
+                { name: "brave", sentence: "The brave climber reached the top without fear.", img: "assets/brave.png" },
+                { name: "sleepy", sentence: "I feel sleepy after studying late at night.", img: "assets/sleepy.png" },
+                { name: "energetic", sentence: "The kids were energetic and played all day.", img: "assets/energetic.png" },
+                { name: "hungry", sentence: "He was hungry after a long bus ride.", img: "assets/hungry.png" },
+                { name: "thirsty", sentence: "I am thirsty, so I need a glass of water.", img: "assets/thirsty.png" },
+                { name: "bored", sentence: "She looked bored while waiting at the cafe.", img: "assets/bored.png" },
+                { name: "funny", sentence: "That costume is so funny that everyone laughed.", img: "assets/funny.png" },
+                { name: "confused", sentence: "I was confused by the last question on the test.", img: "assets/confused.png" },
+                { name: "angry", sentence: "He got angry when the game ended unfairly.", img: "assets/angry.png" },
+                { name: "sad", sentence: "He felt sad after hearing the bad news.", img: "assets/sad.png" },
+                { name: "happy", sentence: "She looks happy and full of joy today.", img: "assets/happy.png" }
+            ];
+
+            let addedCount = 0;
+            sampleData.forEach(item => {
+                const exists = data.some(w => (w.name || "").toLowerCase() === item.name.toLowerCase());
+                if (!exists) {
+                    data.push({
+                        id: Date.now() + Math.floor(Math.random() * 100000) + addedCount,
+                        name: item.name,
+                        sentence: item.sentence,
+                        img: item.img,
+                        hits: 0,
+                        tries: 0,
+                        sentenceHits: 0,
+                        sentenceTries: 0
+                    });
+                    addedCount += 1;
+                }
+            });
+
+            try {
+                render();
+                alert(addedCount + " adet örnek veri eklendi.");
+            } catch (error) {
+                while (addedCount > 0) {
+                    data.pop();
+                    addedCount -= 1;
+                }
+                alert("Depolama alanı dolu olduğu için örnek veriler eklenemedi.");
+                console.error(error);
+            }
+        }
 
         function openModal(id) {
             curId = id; 

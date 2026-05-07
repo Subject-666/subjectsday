@@ -19,6 +19,8 @@
         .btn-success:hover { background: #00ff88; color: black; }
         .btn-fail { background: rgba(255, 77, 77, 0.1); color: #ff4d4d; border: 1px solid #ff4d4d; flex: 1; }
         .btn-fail:hover { background: #ff4d4d; color: white; }
+        .sentence-box { margin-top: 15px; padding: 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.03); text-align: left; font-size: 15px; min-height: 50px; }
+        .sentence-title { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #9fb2d4; margin-bottom: 6px; }
         
         #msg { margin-top: 15px; font-weight: bold; min-height: 24px; font-size: 15px; }
     </style>
@@ -34,6 +36,17 @@
             <button class="btn-success" onclick="recordResult(true)">✓ Doğru Bildim</button>
             <button class="btn-fail" onclick="recordResult(false)">✗ Yanlış Bildim</button>
         </div>
+
+        <div id="sentence-area" style="display:none">
+            <div class="sentence-box">
+                <div class="sentence-title">Cümle</div>
+                <div id="sentence-text">-</div>
+            </div>
+            <div class="action-row">
+                <button class="btn-success" onclick="recordSentenceResult(true)">✓ Cümleyi Bildim</button>
+                <button class="btn-fail" onclick="recordSentenceResult(false)">✗ Cümleyi Bilemedim</button>
+            </div>
+        </div>
         
         <div id="msg"></div>
     </div>
@@ -47,6 +60,10 @@
         const target = wInfo ? wInfo.name : (key || "test");
         document.getElementById('target-text').innerText = target;
         if(wInfo) document.getElementById('word-image').src = wInfo.img;
+        if (wInfo?.sentence) {
+            document.getElementById('sentence-text').innerText = wInfo.sentence;
+            document.getElementById('sentence-area').style.display = 'block';
+        }
 
        function playAudio() {
     window.speechSynthesis.cancel(); // Önceki sesleri sustur
@@ -87,8 +104,8 @@
     window.speechSynthesis.speak(msg);
 }
 
-// Seslerin yüklenmesi için gerekli tetikleyici
-window.speechSynthesis.onvoiceschanged = () => { playAudio; }; 
+// Ses listesi geç yüklendiğinde sentez motorunu uyandır
+window.speechSynthesis.onvoiceschanged = () => {}; 
         function recordResult(isSuccess) {
             const msg = document.getElementById('msg');
             
@@ -103,6 +120,26 @@ window.speechSynthesis.onvoiceschanged = () => { playAudio; };
                     msg.innerHTML = "<span style='color:#ff4d4d'>Sorun değil, tekrar deneyeceğiz.</span>";
                 }
                 
+                localStorage.setItem('subjectWords', JSON.stringify(words));
+            } else {
+                msg.innerHTML = "Sistemde bu kelime bulunamadı.";
+            }
+        }
+
+        function recordSentenceResult(isSuccess) {
+            const msg = document.getElementById('msg');
+
+            if(wInfo) {
+                wInfo.sentenceTries = (wInfo.sentenceTries || 0) + 1;
+
+                if(isSuccess) {
+                    wInfo.sentenceHits = (wInfo.sentenceHits || 0) + 1;
+                    msg.innerHTML = "<span style='color:#00ff88'>Harika! Cümle başarısı kaydedildi.</span>";
+                    confetti({ particleCount: 90, spread: 60, origin: { y: 0.7 } });
+                } else {
+                    msg.innerHTML = "<span style='color:#ff4d4d'>Sorun değil, cümleyi tekrar deneyeceğiz.</span>";
+                }
+
                 localStorage.setItem('subjectWords', JSON.stringify(words));
             } else {
                 msg.innerHTML = "Sistemde bu kelime bulunamadı.";
